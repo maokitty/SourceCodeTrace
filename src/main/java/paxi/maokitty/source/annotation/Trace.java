@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 
 /**
  * Created by maokitty on 19/5/3.
+ * 提供代码与原始代码的一些细节和介绍,方便自己去查原始的代码
  */
 @Retention(RetentionPolicy.SOURCE)
 @Documented

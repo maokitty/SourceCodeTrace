@@ -8,7 +8,7 @@ import paxi.maokitty.source.util.Code;
  */
 @Background(
         target = "了解spring中，配置bean的使用域为 singleton 时，源码的处理方式",
-        conclusion = "",
+        conclusion = "spring配置的singleton是对比着beanName来的，如果是不同的beanName,就算是同一个类也会有两个实例",
         sourceCodeProjectName = "spring-framework",
         sourceCodeAddress = "https://github.com/spring-projects/spring-framework",
         projectVersion = "5.1.1.RELEASE"
@@ -25,9 +25,11 @@ public class SingletonOfSpringBean {
     )
     public void refresh(){
         //...
-        Code.slice("这里负责做两件事情，1是加载定义的bean，2是返回初始化的beanFactory","ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory()");
+        Code.SLICE.source("ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory()")
+                .interpretation("这里负责做两件事情，1是加载定义的bean，2是返回初始化的beanFactory");
         //...
-        Code.slice("完成bean中尚未完成的类的初始化", "finishBeanFactoryInitialization(beanFactory)");
+        Code.SLICE.source( "finishBeanFactoryInitialization(beanFactory)")
+                .interpretation("完成bean中尚未完成的类的初始化");
         //...
     }
 
@@ -49,9 +51,11 @@ public class SingletonOfSpringBean {
     )
     public void refreshBeanFactory(){
         //...
-        Code.slice("创建上下文的BeanFactory,指明使用的就是 DefaultListableBeanFactory ","DefaultListableBeanFactory beanFactory = createBeanFactory();");
+        Code.SLICE.source("DefaultListableBeanFactory beanFactory = createBeanFactory();")
+                .interpretation("创建上下文的BeanFactory,指明使用的就是 DefaultListableBeanFactory ");
         //...
-        Code.slice("真正的开始去加载bean，对应不同的场景，这里有可能是xml的方式加载，也有可能是注解的方式加载,下面以xml为例", "loadBeanDefinitions(beanFactory);");
+        Code.SLICE.source("loadBeanDefinitions(beanFactory);")
+                .interpretation("真正的开始去加载bean，对应不同的场景，这里有可能是xml的方式加载，也有可能是注解的方式加载,下面以xml为例");
         //...
     }
 
@@ -63,9 +67,11 @@ public class SingletonOfSpringBean {
     )
     public void loadBeanDefinitions(){
         //...
-        Code.slice("beanFactory作为registry被XmlReader持有,后续在bean注册的时候就会用到","XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);");
+        Code.SLICE.source("XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);")
+                .interpretation("beanFactory作为registry被XmlReader持有,后续在bean注册的时候就会用到");
         //...
-        Code.slice("在内部通过reader遍历所有的配置文件地址，加载对应的资源，开始一个个的扫描","loadBeanDefinitions(beanDefinitionReader);");
+        Code.SLICE.source("loadBeanDefinitions(beanDefinitionReader);")
+                .interpretation("在内部通过reader遍历所有的配置文件地址，加载对应的资源，开始一个个的扫描");
         //...
     }
 
@@ -77,9 +83,11 @@ public class SingletonOfSpringBean {
     )
     public void doLoadBeanDefinitions(){
         //...
-        Code.slice("找到对应的xml资源后,解析出来dom结构","Document doc = doLoadDocument(inputSource, resource);");
+        Code.SLICE.source("Document doc = doLoadDocument(inputSource, resource);")
+                .interpretation("找到对应的xml资源后,解析出来dom结构");
         //...
-        Code.slice("里面开始从document的根开始,使用BeanDefinitionParserDelegate作为代理，识别读到的节点的名字，比如读到的是<bean>标签，则按照它的方式来处理","int count = registerBeanDefinitions(doc, resource);");
+        Code.SLICE.source("int count = registerBeanDefinitions(doc, resource);")
+                .interpretation("里面开始从document的根开始,使用BeanDefinitionParserDelegate作为代理，识别读到的节点的名字，比如读到的是<bean>标签，则按照它的方式来处理");
         //...
     }
 
@@ -93,9 +101,11 @@ public class SingletonOfSpringBean {
             tip = "getReaderContext().getRegistry() 它实际上就是上文提到过的 beanFactory"
     )
     public void processBeanDefinition(){
-        Code.slice("将读取到的xml标签的内容解析成类GenericBeanDefinition，并放入BeanDefinitionHolder保管","BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);");
+        Code.SLICE.source("BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);")
+                .interpretation("将读取到的xml标签的内容解析成类GenericBeanDefinition，并放入BeanDefinitionHolder保管");
         //...
-        Code.slice("读取到的内容正式的注册到BeanFactory,也就是进入DefaultListableBeanFactory来执行注册详情","BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());");
+        Code.SLICE.source("BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());")
+                .interpretation("读取到的内容正式的注册到BeanFactory,也就是进入DefaultListableBeanFactory来执行注册详情");
         //...
     }
 
@@ -107,8 +117,10 @@ public class SingletonOfSpringBean {
     @KeyPoint
     public void registerBeanDefinition(){
        //...
-       Code.slice("读取到的bean放入到map,也就是说只要beanName不一样，就可以保留下来","this.beanDefinitionMap.put(beanName, beanDefinition);");
-       Code.slice("记住所有的bean的名字，后面用到","this.beanDefinitionNames.add(beanName);");
+        Code.SLICE.source("this.beanDefinitionMap.put(beanName, beanDefinition);")
+                .interpretation("读取到的bean放入到map,也就是说只要beanName不一样，就可以保留下来");
+        Code.SLICE.source("this.beanDefinitionNames.add(beanName);")
+                .interpretation("记住所有的bean的名字，后面用到");
        //...
     }
 
@@ -119,7 +131,8 @@ public class SingletonOfSpringBean {
     )
     public void finishBeanFactoryInitialization(){
         //...
-        Code.slice("此时bean已经记在完毕，开始去初始化所有非懒加载的 bean","beanFactory.preInstantiateSingletons();");
+        Code.SLICE.source("beanFactory.preInstantiateSingletons();")
+                .interpretation("此时bean已经记在完毕，开始去初始化所有非懒加载的 bean");
     }
 
     @Trace(
@@ -129,7 +142,8 @@ public class SingletonOfSpringBean {
     )
     public void preInstantiateSingletons(){
         //...
-        Code.slice("遍历所有bean的名字，找到满足单例(就是读取scope上标明是singleton或者是没有写scope)的bean，开始生成","getBean(beanName);");
+        Code.SLICE.source("getBean(beanName);")
+                .interpretation("遍历所有bean的名字，找到满足单例(就是读取scope上标明是singleton或者是没有写scope)的bean，开始生成");
     }
     
     @Trace(
@@ -139,12 +153,12 @@ public class SingletonOfSpringBean {
     )
     public void doGetBean(){
         //...
-        Code.slice("根据定义，如果他是singleton，就执行对应的逻辑",
-                "if (mbd.isSingleton()) {\n" +
-                "   sharedInstance = getSingleton(beanName, () -> {\n" +
-                "     return createBean(beanName, mbd, args);\n" +
-                "   });\n" +
-                "}");
+        Code.SLICE.source("if (mbd.isSingleton()) {\n" +
+                        "   sharedInstance = getSingleton(beanName, () -> {\n" +
+                        "     return createBean(beanName, mbd, args);\n" +
+                        "   });\n" +
+                        "}")
+                .interpretation("根据定义，如果他是singleton，就执行对应的逻辑");
         //...
     }
     @Trace(
@@ -158,13 +172,17 @@ public class SingletonOfSpringBean {
     )
     @KeyPoint
     public void getSingleton(){
-        Code.slice("单例获取是同步进行的","synchronized (this.singletonObjects) ");
+        Code.SLICE.source("synchronized (this.singletonObjects) ")
+                .interpretation("单例获取是同步进行的");
         //...
-        Code.slice("打上标记，表明单例已经开始创建，保证后来的方法不会重复创建","beforeSingletonCreation(beanName);");
+        Code.SLICE.source("beforeSingletonCreation(beanName);")
+                .interpretation("打上标记，表明单例已经开始创建，保证后来的方法不会重复创建");
         //...
-        Code.slice("开始执行获取对象，这里利用了java8的lambda表达式,创建","singletonObject = singletonFactory.getObject();");
+        Code.SLICE.source("singletonObject = singletonFactory.getObject();")
+                .interpretation("开始执行获取对象，这里利用了java8的 lambda 表达式");
         //...
-        Code.slice("创建好的对象保存起来，通过其他方式，比如beanName来获取单例的时候，就查到的是已经创建的唯一一个bean","addSingleton(beanName, singletonObject);");
+        Code.SLICE.source("addSingleton(beanName, singletonObject);")
+                .interpretation("创建好的对象保存起来，通过其他方式，比如beanName来获取单例的时候，就查到的是已经创建的唯一一个bean");
         //...
     }
 
