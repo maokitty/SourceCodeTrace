@@ -10,4 +10,5 @@ import java.lang.annotation.*;
 @Documented
 @Target({ElementType.METHOD,ElementType.TYPE})
 public @interface KeyPoint {
+    String desc() default "";
 }
