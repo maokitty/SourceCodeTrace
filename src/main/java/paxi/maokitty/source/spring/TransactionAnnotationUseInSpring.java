@@ -7,7 +7,7 @@ import paxi.maokitty.source.util.Code;
  * Created by maokitty on 19/5/12.
  */
 @Background(
-        target = "了解spring中事务源码的实现方式",
+        target = "了解spring中事务注解transactional源码的实现方式",
         conclusion = "spring在扫描tx标签的时候，碰到transactional标注的类或者方法，会创建对应的AOP代理，在调用的时候则是AOP代理去执行，先按照AOP的方式执行相应的逻辑，再执行用户定义的方法，如果有问题则执行对应的事务",
         sourceCodeProjectName = "spring-framework",
         sourceCodeAddress = "https://github.com/spring-projects/spring-framework",
