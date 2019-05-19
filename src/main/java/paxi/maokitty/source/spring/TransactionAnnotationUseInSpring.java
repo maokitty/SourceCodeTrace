@@ -243,7 +243,7 @@ public class TransactionAnnotationUseInSpring {
         Code.SLICE.source("final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);")
                 .interpretation("查到对应方法的事务配置");
         Code.SLICE.source("final PlatformTransactionManager tm = determineTransactionManager(txAttr);")
-                .interpretation("拿到transactionManager,比如用户在xml中配置的 org.springframework.jdbc.datasource.DataSourceTransactionManager,以下分析以它为例");
+                .interpretation("拿到transactionManager,比如用户在xml中配置的 org.springframework.jdbc.datasource.DataSourceTransactionManager");
         Code.SLICE.source("final String joinpointIdentification = methodIdentification(method, targetClass);")
                 .interpretation("获取transaction标注的方法");
         //...
