@@ -7,13 +7,13 @@ import paxi.maokitty.source.util.Code;
  * Created by maokitty on 19/5/12.
  */
 @Background(
-        target = "了解spring中事务源码的处理方式",
-        conclusion = "",
+        target = "了解spring中事务源码的实现方式",
+        conclusion = "spring在扫描tx标签的时候，碰到transactional标注的类或者方法，会创建对应的AOP代理，在调用的时候则是AOP代理去执行，先按照AOP的方式执行相应的逻辑，再执行用户定义的方法，如果有问题则执行对应的事务",
         sourceCodeProjectName = "spring-framework",
         sourceCodeAddress = "https://github.com/spring-projects/spring-framework",
         projectVersion = "5.1.1.RELEASE"
 )
-public class TransactionOfSpring {
+public class TransactionAnnotationUseInSpring {
     @Main
     @Trace(
             index = 0,
@@ -243,7 +243,7 @@ public class TransactionOfSpring {
         Code.SLICE.source("final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);")
                 .interpretation("查到对应方法的事务配置");
         Code.SLICE.source("final PlatformTransactionManager tm = determineTransactionManager(txAttr);")
-                .interpretation("拿到transactionManager,比如用户在xml中配置的 org.springframework.jdbc.datasource.DataSourceTransactionManager,一下分析以它为例");
+                .interpretation("拿到transactionManager,比如用户在xml中配置的 org.springframework.jdbc.datasource.DataSourceTransactionManager,以下分析以它为例");
         Code.SLICE.source("final String joinpointIdentification = methodIdentification(method, targetClass);")
                 .interpretation("获取transaction标注的方法");
         //...
