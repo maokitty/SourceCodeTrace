@@ -21,6 +21,83 @@ public class SetCommandExecuteTrace {
     @Main
     @Trace(
             index = 0,
+            originClassName = "networking.c",
+            function = "void processInputBuffer(client *c) ",
+            introduction = "从缓存中读取数据，读到的内容就是一条完整的命令,在这之前，会有监听连接建立，监听已经建立链接时间的触发，一但连接有事件触发，将读到的内容放入buffer，这里开始读取内容"
+    )
+    public void processInputBuffer(){
+        //...
+        Code.SLICE.source("if (processInlineBuffer(c) != C_OK) break;")
+                .interpretation("解析命令的结构");
+        //...
+        Code.SLICE.source("if (processCommand(c) == C_OK)")
+                .interpretation("执行命令");
+
+    }
+
+    @Trace(
+            index = 1,
+            originClassName = "networking.c",
+            function = "int processInlineBuffer(client *c)"
+    )
+    public void processInlineBuffer(){
+        //...
+        Code.SLICE.source(" for (c->argc = 0, j = 0; j < argc; j++) {\n" +
+                "        if (sdslen(argv[j])) {\n" +
+                "            c->argv[c->argc] = createObject(OBJ_STRING,argv[j]);\n" +
+                "            c->argc++;\n" +
+                "        } else {\n" +
+                "            sdsfree(argv[j]);\n" +
+                "        }\n" +
+                "    }")
+                .interpretation("对于读到的每一个参数，都会创建一个object放入到 argv 中");
+    }
+
+    @Trace(
+            index = 2,
+            originClassName = "networking.c",
+            function = "robj *createObject(int type, void *ptr)"
+    )
+    public void createObject(){
+        Code.SLICE.source(" robj *o = zmalloc(sizeof(*o));\n" +
+                "    o->type = type;\n" +
+                "    o->encoding = OBJ_ENCODING_RAW;\n" +
+                "    o->ptr = ptr;\n" +
+                "    o->refcount = 1;\n" +
+                "\n" +
+                "    /* Set the LRU to the current lruclock (minutes resolution), or\n" +
+                "     * alternatively the LFU counter. */\n" +
+                "    if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {\n" +
+                "        o->lru = (LFUGetTimeInMinutes()<<8) | LFU_INIT_VAL;\n" +
+                "    } else {\n" +
+                "        o->lru = LRU_CLOCK();\n" +
+                "    }\n" +
+                "    return o;\n")
+                .interpretation("创建 redisObject 对象，创建默认指定 encoding 为 OBJ_ENCODING_RAW");
+    }
+    @Trace(
+            index = 3,
+            originClassName = "server.h",
+            function = "struct define of redisObject "
+    )
+    public void structDefineOfRedisObject(){
+        Code.SLICE.source("typedef struct redisObject {\n" +
+                "    unsigned type:4;\n" +
+                "    unsigned encoding:4;\n" +
+                "    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or\n" +
+                "                            * LFU data (least significant 8 bits frequency\n" +
+                "                            * and most significant 16 bits access time). */\n" +
+                "    int refcount;\n" +
+                "    void *ptr;\n" +
+                "} robj;")
+                .interpretation("redisObject的定义");
+    }
+
+
+
+
+    @Trace(
+            index = 4,
             originClassName = "server.c",
             function = "int processCommand(client *c)",
             introduction = "执行这个函数的时候，代表已经读到了完整的命令,参数则放在client的  argv/argc 字段中"
@@ -35,7 +112,7 @@ public class SetCommandExecuteTrace {
         //...
     }
     @Trace(
-            index = 1,
+            index = 5,
             originClassName = "server.c",
             function = "struct redisCommand *lookupCommand(sds name)"
     )
@@ -47,7 +124,7 @@ public class SetCommandExecuteTrace {
                 .interpretation("3:server是一个全局字段，表示的是 redisServer ，它会在服务启动的时候进行初始化，其中一项就包括初始化所有redis支持的命令");
     }
     @Trace(
-            index = 2,
+            index = 6,
             originClassName = "server.c",
             function = "void initServerConfig(void)"
     )
@@ -60,7 +137,7 @@ public class SetCommandExecuteTrace {
         //...
     }
     @Trace(
-            index = 3,
+            index = 7,
             originClassName = "server.c",
             function = "void populateCommandTable(void)"
     )
@@ -74,7 +151,7 @@ public class SetCommandExecuteTrace {
         //...
     }
     @Trace(
-            index = 4,
+            index = 8,
             originClassName = "server.c",
             function = "void call(client *c, int flags)"
     )
@@ -85,7 +162,7 @@ public class SetCommandExecuteTrace {
         //...
     }
     @Trace(
-            index = 5,
+            index = 9,
             originClassName = "t_string.c",
             function = "void setCommand(client *c)",
             introduction = "SET 命令的执行格式为：SET key value [NX] [XX] [EX <seconds>] [PX <milliseconds>] "
@@ -100,7 +177,7 @@ public class SetCommandExecuteTrace {
 
     @KeyPoint
     @Trace(
-            index = 6,
+            index = 10,
             originClassName = "object.c",
             function = "robj *tryObjectEncoding(robj *o) ",
             introduction = "robj即结构体 redisObject ，它的结构如下：typedef struct redisObject {\n" +
@@ -146,7 +223,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 7,
+            index = 11,
             originClassName = "t_string.c",
             function = "void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply)"
     )
@@ -175,7 +252,7 @@ public class SetCommandExecuteTrace {
 
     }
     @Trace(
-            index = 8,
+            index = 12,
             originClassName = "db.c",
             function = "void setKey(redisDb *db, robj *key, robj *val) "
     )
@@ -189,7 +266,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 9,
+            index = 13,
             originClassName = "db.c",
             function = "robj *lookupKeyWrite(redisDb *db, robj *key) "
     )
@@ -203,7 +280,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 10,
+            index = 14,
             originClassName = "db.c",
             function = "void dbAdd(redisDb *db, robj *key, robj *val) "
     )
@@ -214,7 +291,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 11,
+            index = 15,
             originClassName = "sds.c",
             function = "sds sdsdup(const sds s) "
     )
@@ -225,7 +302,7 @@ public class SetCommandExecuteTrace {
 
     @KeyPoint
     @Trace(
-            index = 12,
+            index = 16,
             originClassName = "sds.c",
             function = "sds sdsnewlen(const void *init, size_t initlen)"
     )
@@ -273,7 +350,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 13,
+            index = 17,
             originClassName = "sds.c",
             function = "static inline char sdsReqType(size_t string_size) "
     )
@@ -297,7 +374,7 @@ public class SetCommandExecuteTrace {
 
     @KeyPoint
     @Trace(
-            index = 14,
+            index = 18,
             originClassName = "sds.h",
             function = "struct define of sdshdr16"
     )
@@ -311,7 +388,7 @@ public class SetCommandExecuteTrace {
               .interpretation("len表示使用了的长度，alloc表示分配的空间长度，flags的最低三个bit用来表示header的类型")
               .interpretation("1：整个sdsdr16的空间分配为 首先是16字节的长度，然后是16字节的空间分配，然后是1自己的类型，然后是跟着的数据内容")
               .interpretation("2:除了sdsdr5之外，len/alloc/flags 均可以看做 header部分，数组这块则是存储数据它的长度为最大长度+1，多余的1个是为了和C做兼容")
-              .interpretation("3:__attribute__ ((__packed__)) 是为了告诉编译器，以紧凑的方式存放，不做对其，redis这样做方便获取数据,比如要拿到flag只需要获取 buf的前一个地址即可");
+              .interpretation("3:__attribute__ ((__packed__)) 是为了告诉编译器，以紧凑的方式存放，不做对齐，redis这样做方便获取数据,比如要拿到flag只需要获取 buf的前一个地址即可");
     }
 
 }
