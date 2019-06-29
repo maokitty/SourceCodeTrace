@@ -90,7 +90,13 @@ public class SetCommandExecuteTrace {
                 "    int refcount;\n" +
                 "    void *ptr;\n" +
                 "} robj;")
-                .interpretation("redisObject的定义");
+                .interpretation("redisObject的定义")
+                .interpretation("1:type 占4bit,指string/list/hash/zset/set")
+                .interpretation("2:encoding 占4bit,指具体的编码方式")
+                .interpretation("3:lru时间戳，LRU_BITS 取值为 24bit")
+                .interpretation("4:refcont引用次数， 最多占4字节")
+                .interpretation("5:数据指针，最多8字节")
+                ;
     }
 
 
@@ -194,17 +200,17 @@ public class SetCommandExecuteTrace {
 
         //...
         Code.SLICE.source("serverAssertWithInfo(NULL,o,o->type == OBJ_STRING);")
-                .interpretation("确保进来的就是string的value");
+                .interpretation("确保进来的就是redisObject的类型是string");
         Code.SLICE.source("if (!sdsEncodedObject(o)) return o;")
-                .interpretation("如果编码方式已经确认是 raw/embstr ,直接返回传入的对象");
+                .interpretation("如果redisObject的编码方式不是 raw/embstr ,直接返回传入的对象");
         //...
         Code.SLICE.source("len = sdslen(s);")
-                .interpretation("获取要存储的字符串值的长度，s取值即 sds s = o->ptr;");
+                .interpretation("获取要存储的字符串值的长度，s取值即 redisObject指向的 数据字节指针");
         Code.SLICE.source("if (len <= 20 && string2l(s,len,&value))")
                 .interpretation("判断字符串的长度如果小于20并且能够转成long  类型，执行转成long 的逻辑,并结果存储到value");
         //...
-        Code.SLICE.source("      o->encoding = OBJ_ENCODING_INT;\n" +
-                "            o->ptr = (void*) value;")
+        Code.SLICE.source("       o->encoding = OBJ_ENCODING_INT;\n" +
+                     "            o->ptr = (void*) value;")
                 .interpretation("判定好是可以转成long则设定编码方式为int,同时数据指针就直接存储值");
         //...
         Code.SLICE.source("if (len <= OBJ_ENCODING_EMBSTR_SIZE_LIMIT) ")
@@ -214,16 +220,27 @@ public class SetCommandExecuteTrace {
                 .interpretation("将值使用emb编码后再返回");
         //...
         Code.SLICE.source("if (o->encoding == OBJ_ENCODING_RAW &&\n" +
-                "        sdsavail(s) > len/10)\n" +
-                "    {\n" +
-                "        o->ptr = sdsRemoveFreeSpace(o->ptr);\n" +
-                "    }")
+                        "        sdsavail(s) > len/10)\n" +
+                        "    {\n" +
+                        "        o->ptr = sdsRemoveFreeSpace(o->ptr);\n" +
+                        "    }")
                 .interpretation("如果超过了emb限制，则尽量的去较少浪费的空间,将原始的内容直接返回");
         //...
     }
 
     @Trace(
             index = 11,
+            originClassName = "object.c",
+            function = "robj *createEmbeddedStringObject(const char *ptr, size_t len) "
+    )
+    public void createEmbeddedStringObject(){
+        Code.SLICE.source("robj *o = zmalloc(sizeof(robj)+sizeof(struct sdshdr8)+len+1);")
+                .interpretation("指定embeddedString应该分配的内存大小为 16+3+44+1=64 其中 redisObject的标记最大为16字节，sdshdr8 len的最大长度为44字节，1字节为字符结尾标记");
+        //...
+    }
+
+    @Trace(
+            index = 12,
             originClassName = "t_string.c",
             function = "void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply)"
     )
@@ -252,7 +269,7 @@ public class SetCommandExecuteTrace {
 
     }
     @Trace(
-            index = 12,
+            index = 13,
             originClassName = "db.c",
             function = "void setKey(redisDb *db, robj *key, robj *val) "
     )
@@ -266,7 +283,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 13,
+            index = 14,
             originClassName = "db.c",
             function = "robj *lookupKeyWrite(redisDb *db, robj *key) "
     )
@@ -280,7 +297,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 14,
+            index = 15,
             originClassName = "db.c",
             function = "void dbAdd(redisDb *db, robj *key, robj *val) "
     )
@@ -291,7 +308,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 15,
+            index = 16,
             originClassName = "sds.c",
             function = "sds sdsdup(const sds s) "
     )
@@ -302,7 +319,7 @@ public class SetCommandExecuteTrace {
 
     @KeyPoint
     @Trace(
-            index = 16,
+            index = 17,
             originClassName = "sds.c",
             function = "sds sdsnewlen(const void *init, size_t initlen)"
     )
@@ -350,7 +367,7 @@ public class SetCommandExecuteTrace {
     }
 
     @Trace(
-            index = 17,
+            index = 18,
             originClassName = "sds.c",
             function = "static inline char sdsReqType(size_t string_size) "
     )
@@ -374,21 +391,20 @@ public class SetCommandExecuteTrace {
 
     @KeyPoint
     @Trace(
-            index = 18,
+            index = 19,
             originClassName = "sds.h",
-            function = "struct define of sdshdr16"
+            function = "struct define of sdshdr8"
     )
-    public void structOfSdshdr16(){
-      Code.SLICE.source("struct __attribute__ ((__packed__)) sdshdr16 {\n" +
-              "    uint16_t len; /* used */\n" +
-              "    uint16_t alloc; /* excluding the header and null terminator */\n" +
+    public void structOfSdshdr8(){
+      Code.SLICE.source("struct __attribute__ ((__packed__)) sdshdr8 {\n" +
+              "    uint8_t len; /* 已经使用的长度 */\n" +
+              "    uint8_t alloc; /* 分配的长度 */\n" +
               "    unsigned char flags; /* 3 lsb of type, 5 unused bits */\n" +
               "    char buf[];\n" +
               "};")
-              .interpretation("len表示使用了的长度，alloc表示分配的空间长度，flags的最低三个bit用来表示header的类型")
-              .interpretation("1：整个sdsdr16的空间分配为 首先是16字节的长度，然后是16字节的空间分配，然后是1自己的类型，然后是跟着的数据内容")
-              .interpretation("2:除了sdsdr5之外，len/alloc/flags 均可以看做 header部分，数组这块则是存储数据它的长度为最大长度+1，多余的1个是为了和C做兼容")
-              .interpretation("3:__attribute__ ((__packed__)) 是为了告诉编译器，以紧凑的方式存放，不做对齐，redis这样做方便获取数据,比如要拿到flag只需要获取 buf的前一个地址即可");
+              .interpretation("len表示使用了的长度，alloc表示分配的空间长度，flags的最低三个bit用来表示header的类型,类型比如 sdshdr8")
+              .interpretation("1：uint8_t指的是 unsigned char ,大小为1字节 char buf[]本身不计算大小,只是真实数据存储的时候，会在 buf最后添加 1个 \0,为了和C做兼容,方便利用C的一些函数")
+              .interpretation("2:__attribute__ ((__packed__)) 是为了告诉编译器，以紧凑的方式存放，不做对齐，redis这样做方便获取数据,比如要拿到flag只需要获取 buf的前一个地址即可");
     }
 
 }
