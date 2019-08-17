@@ -1,6 +1,5 @@
 package paxi.maokitty.source.redis;
 
-import org.omg.CORBA.PUBLIC_MEMBER;
 import paxi.maokitty.source.annotation.Background;
 import paxi.maokitty.source.annotation.KeyPoint;
 import paxi.maokitty.source.annotation.Main;
