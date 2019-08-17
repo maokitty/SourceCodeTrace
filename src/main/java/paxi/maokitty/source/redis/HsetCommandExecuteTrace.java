@@ -195,7 +195,7 @@ public class HsetCommandExecuteTrace {
                 "    long rehashidx; /* rehashing not in progress if rehashidx == -1 */\n" +
                 "    unsigned long iterators; /* number of iterators currently running */\n" +
                 "} dict;")
-                .interpretation("")
+                .interpretation("字典结构")
                 .interpretation("dictType使得redis可以对任意类型的key和value对应类型来操作")
                 .interpretation("privdata存储用户传进来的值，key就是key,value就是value")
                 .interpretation("dictht数组存储两个ht,在rehash的时候，ht[0]表示旧的，ht[1]表示新的，当rehash完成，再将ht[1]地址给ht[0]")
