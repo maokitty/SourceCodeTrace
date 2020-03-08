@@ -15,4 +15,5 @@ public @interface Background {
     String sourceCodeProjectName();
     String projectVersion();
     String sourceCodeAddress();
+    String sourceCodeInProjectDesc() default "项目中出现的代码均有删减，只提取相对核心的部分";
 }

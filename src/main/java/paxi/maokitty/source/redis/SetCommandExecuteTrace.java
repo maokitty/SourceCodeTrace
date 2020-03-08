@@ -15,7 +15,6 @@ import paxi.maokitty.source.util.Code;
         sourceCodeProjectName = "reids",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
-
 )
 public class SetCommandExecuteTrace {
     @Main
