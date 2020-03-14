@@ -12,7 +12,7 @@ import paxi.maokitty.source.util.Code;
 @Background(
         target = "了解用户执行rpush之后，redis底层的支持list方式",
         conclusion = "list在底层会使用quicklist的结构来存储，每一个quicklistNode的节点都会存储一个可配置的ziplist大小量，如果有多个quicklistNode，它会根据配置的压缩深度，来使用lzf算法进行压缩",
-        sourceCodeProjectName = "reids",
+        sourceCodeProjectName = "redis",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
 

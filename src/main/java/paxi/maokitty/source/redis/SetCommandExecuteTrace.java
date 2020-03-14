@@ -12,7 +12,7 @@ import paxi.maokitty.source.util.Code;
 @Background(
         target = "了解用户调用了set命令之后，redis执行的过程，以及对 string value的一些定义",
         conclusion = "在读到set命令之后，对于传进来的数据会转换成redisObject,而根据string value长度的不同使用不同的编码，同时存储的结构也会不一样，以达到优化内存的目的",
-        sourceCodeProjectName = "reids",
+        sourceCodeProjectName = "redis",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
 )

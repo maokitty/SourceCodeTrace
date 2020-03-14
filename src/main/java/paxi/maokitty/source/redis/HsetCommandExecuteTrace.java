@@ -13,7 +13,7 @@ import paxi.maokitty.source.util.Code;
         target = "了解用户执行hset之后，redis底层的支持hash的方式",
         conclusion = "hash底部使用dict的结构存储,每个dict会自带当前的数据类型对应hash计算函数等，以及是否正在进行rehash，为了实现Rehash，它自己会有两个hash表的引用" +
                 "每个hash表都存一个entry的数组，当遇到冲突的时候，就使用链表的方式来解决",
-        sourceCodeProjectName = "reids",
+        sourceCodeProjectName = "redis",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
 
