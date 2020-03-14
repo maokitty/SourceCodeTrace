@@ -26,18 +26,18 @@ public class SaddCommandExecuteTrace {
                 Code.SLICE.source("set = lookupKeyWrite(c->db,c->argv[1]);")
                         .interpretation("查看db中是否有存储当前要插入的key");
 
-                Code.SLICE.source("if (set == NULL) {\n" +
-                        "        set = setTypeCreate(c->argv[2]->ptr);\n" +
-                        "        dbAdd(c->db,c->argv[1],set);\n" +
-                        "    } else {\n" +
-                        "        if (set->type != OBJ_SET) {\n" +
-                        "            addReply(c,shared.wrongtypeerr);\n" +
-                        "            return;\n" +
-                        "        }\n" +
+                Code.SLICE.source("if (set == NULL) {" +
+                        "        set = setTypeCreate(c->argv[2]->ptr);" +
+                        "        dbAdd(c->db,c->argv[1],set);" +
+                        "    } else {" +
+                        "        if (set->type != OBJ_SET) {" +
+                        "            addReply(c,shared.wrongtypeerr);" +
+                        "            return;" +
+                        "        }" +
                         "    }")
                         .interpretation("如果要增加的key不存在，则新加并存储，否则查看原有key的类型是否是 set 不是说明共享了同一个key在不同的结构，抛出异常");
-                Code.SLICE.source("for (j = 2; j < c->argc; j++) {\n" +
-                        "        if (setTypeAdd(set,c->argv[j]->ptr)) added++;\n" +
+                Code.SLICE.source("for (j = 2; j < c->argc; j++) {" +
+                        "        if (setTypeAdd(set,c->argv[j]->ptr)) added++;" +
                         "    }")
                         .interpretation("逐个的添加集合总需要添加的元素");
                 //..
@@ -50,10 +50,10 @@ public class SaddCommandExecuteTrace {
                 function = "robj *setTypeCreate(sds value)"
         )
         public void setTypeCreate(){
-              Code.SLICE.source("robj *setTypeCreate(sds value) {\n" +
-                      "    if (isSdsRepresentableAsLongLong(value,NULL) == C_OK)\n" +
-                      "        return createIntsetObject();\n" +
-                      "    return createSetObject();\n" +
+              Code.SLICE.source("robj *setTypeCreate(sds value) {" +
+                      "    if (isSdsRepresentableAsLongLong(value,NULL) == C_OK)" +
+                      "        return createIntsetObject();" +
+                      "    return createSetObject();" +
                       "}")
                       .interpretation("看set中要添加的值是否能够转成long long类型，如果可以，set的类型为IntSet,否则使用hash table");
         }
@@ -66,38 +66,38 @@ public class SaddCommandExecuteTrace {
                 more = "往hashtable中添加数据可见 HsetCommandExecuteTrace"
         )
         public void setTypeAdd(){
-                Code.SLICE.source("if (subject->encoding == OBJ_ENCODING_HT) {\n" +
-                        "        dict *ht = subject->ptr;\n" +
-                        "        dictEntry *de = dictAddRaw(ht,value,NULL);\n" +
-                        "        if (de) {\n" +
-                        "            dictSetKey(ht,de,sdsdup(value));\n" +
-                        "            dictSetVal(ht,de,NULL);\n" +
-                        "            return 1;\n" +
-                        "        }\n" +
+                Code.SLICE.source("if (subject->encoding == OBJ_ENCODING_HT) {" +
+                        "        dict *ht = subject->ptr;" +
+                        "        dictEntry *de = dictAddRaw(ht,value,NULL);" +
+                        "        if (de) {" +
+                        "            dictSetKey(ht,de,sdsdup(value));" +
+                        "            dictSetVal(ht,de,NULL);" +
+                        "            return 1;" +
+                        "        }" +
                         "    }")
                         .interpretation("处理使用hash table存储的情况")
                         .interpretation("1: 传进来的key对象它的指针即指向存储结构hashtable")
                         .interpretation("2：往hashtable中插入key和value即可");
-                Code.SLICE.source("else if (subject->encoding == OBJ_ENCODING_INTSET) {\n" +
-                        "        if (isSdsRepresentableAsLongLong(value,&llval) == C_OK) {\n" +
-                        "            uint8_t success = 0;\n" +
-                        "            subject->ptr = intsetAdd(subject->ptr,llval,&success);\n" +
-                        "            if (success) {\n" +
-                        "                /* Convert to regular set when the intset contains\n" +
-                        "                 * too many entries. */\n" +
-                        "                if (intsetLen(subject->ptr) > server.set_max_intset_entries)\n" +
-                        "                    setTypeConvert(subject,OBJ_ENCODING_HT);\n" +
-                        "                return 1;\n" +
-                        "            }\n" +
-                        "        } else {\n" +
-                        "            /* Failed to get integer from object, convert to regular set. */\n" +
-                        "            setTypeConvert(subject,OBJ_ENCODING_HT);\n" +
-                        "\n" +
-                        "            /* The set *was* an intset and this value is not integer\n" +
-                        "             * encodable, so dictAdd should always work. */\n" +
-                        "            serverAssert(dictAdd(subject->ptr,sdsdup(value),NULL) == DICT_OK);\n" +
-                        "            return 1;\n" +
-                        "        }\n" +
+                Code.SLICE.source("else if (subject->encoding == OBJ_ENCODING_INTSET) {" +
+                        "        if (isSdsRepresentableAsLongLong(value,&llval) == C_OK) {" +
+                        "            uint8_t success = 0;" +
+                        "            subject->ptr = intsetAdd(subject->ptr,llval,&success);" +
+                        "            if (success) {" +
+                        "                /* Convert to regular set when the intset contains" +
+                        "                 * too many entries. */" +
+                        "                if (intsetLen(subject->ptr) > server.set_max_intset_entries)" +
+                        "                    setTypeConvert(subject,OBJ_ENCODING_HT);" +
+                        "                return 1;" +
+                        "            }" +
+                        "        } else {" +
+                        "            /* Failed to get integer from object, convert to regular set. */" +
+                        "            setTypeConvert(subject,OBJ_ENCODING_HT);" +
+                        "" +
+                        "            /* The set *was* an intset and this value is not integer" +
+                        "             * encodable, so dictAdd should always work. */" +
+                        "            serverAssert(dictAdd(subject->ptr,sdsdup(value),NULL) == DICT_OK);" +
+                        "            return 1;" +
+                        "        }" +
                         "    }")
                         .interpretation("set的另外一种数据结构，intset ,只要当前数据还能够转换成 longlong,那么继续在set中增加，否则将结构转换成 hashtable")
                         .interpretation("1: 往intset添加成功之后，如果集合的元素个数已经超过了 配置的 set_max_intset_entries ，那么转换成 hashtable");
@@ -114,22 +114,22 @@ public class SaddCommandExecuteTrace {
                Code.SLICE.source("uint8_t valenc = _intsetValueEncoding(value);")
                       .interpretation("看要插入值的大小，安排不同的编码方式，具体包括：INTSET_ENC_INT64 INTSET_ENC_INT32 INTSET_ENC_INT16");
                 //..
-                Code.SLICE.source("if (valenc > intrev32ifbe(is->encoding)) {\n" +
-                        "        /* This always succeeds, so we don't need to curry *success. */\n" +
-                        "        return intsetUpgradeAndAdd(is,value);\n" +
+                Code.SLICE.source("if (valenc > intrev32ifbe(is->encoding)) {" +
+                        "        /* This always succeeds, so we don't need to curry *success. */" +
+                        "        return intsetUpgradeAndAdd(is,value);" +
                         "    } ")
                         .interpretation("当插入的值大于当前编码方式的值，需要进行升级");
-                Code.SLICE.source(" else {\n" +
-                        "        /* Abort if the value is already present in the set.\n" +
-                        "         * This call will populate \"pos\" with the right position to insert\n" +
-                        "         * the value when it cannot be found. */\n" +
-                        "        if (intsetSearch(is,value,&pos)) {\n" +
-                        "            if (success) *success = 0;\n" +
-                        "            return is;\n" +
-                        "        }\n" +
-                        "\n" +
-                        "        is = intsetResize(is,intrev32ifbe(is->length)+1);\n" +
-                        "        if (pos < intrev32ifbe(is->length)) intsetMoveTail(is,pos,pos+1);\n" +
+                Code.SLICE.source(" else {" +
+                        "        /* Abort if the value is already present in the set." +
+                        "         * This call will populate \"pos\" with the right position to insert" +
+                        "         * the value when it cannot be found. */" +
+                        "        if (intsetSearch(is,value,&pos)) {" +
+                        "            if (success) *success = 0;" +
+                        "            return is;" +
+                        "        }" +
+                        "" +
+                        "        is = intsetResize(is,intrev32ifbe(is->length)+1);" +
+                        "        if (pos < intrev32ifbe(is->length)) intsetMoveTail(is,pos,pos+1);" +
                         "    }")
                         .interpretation("当前值没超过当前的编码方式")
                         .interpretation("1: 如果集合中有这个值，那么什么都不做,否则拿到了要插入的位置")
@@ -149,34 +149,34 @@ public class SaddCommandExecuteTrace {
         public void intsetSearch(){
             Code.SLICE.source("int min = 0, max = intrev32ifbe(is->length)-1, mid = -1;")
                     .interpretation("先记下最小值和最大值的下标");
-            Code.SLICE.source("  if (intrev32ifbe(is->length) == 0) {\n" +
-                    "        if (pos) *pos = 0;\n" +
-                    "        return 0;\n" +
-                    "    } else {\n" +
-                    "        /* Check for the case where we know we cannot find the value,\n" +
-                    "         * but do know the insert position. */\n" +
-                    "        if (value > _intsetGet(is,intrev32ifbe(is->length)-1)) {\n" +
-                    "            if (pos) *pos = intrev32ifbe(is->length);\n" +
-                    "            return 0;\n" +
-                    "        } else if (value < _intsetGet(is,0)) {\n" +
-                    "            if (pos) *pos = 0;\n" +
-                    "            return 0;\n" +
-                    "        }\n" +
+            Code.SLICE.source("  if (intrev32ifbe(is->length) == 0) {" +
+                    "        if (pos) *pos = 0;" +
+                    "        return 0;" +
+                    "    } else {" +
+                    "        /* Check for the case where we know we cannot find the value," +
+                    "         * but do know the insert position. */" +
+                    "        if (value > _intsetGet(is,intrev32ifbe(is->length)-1)) {" +
+                    "            if (pos) *pos = intrev32ifbe(is->length);" +
+                    "            return 0;" +
+                    "        } else if (value < _intsetGet(is,0)) {" +
+                    "            if (pos) *pos = 0;" +
+                    "            return 0;" +
+                    "        }" +
                     "    }")
                     .interpretation("处理边界情况")
                     .interpretation("1: 如果集合中是空的，直接在开始插入即可")
                     .interpretation("2: 如果新插入的值小于当前最小的值，在开头插入即可")
                     .interpretation("3: 如果插入新值大于当前最大的值，在结尾插入即可");
-            Code.SLICE.source("while(max >= min) {\n" +
-                    "        mid = ((unsigned int)min + (unsigned int)max) >> 1;\n" +
-                    "        cur = _intsetGet(is,mid);\n" +
-                    "        if (value > cur) {\n" +
-                    "            min = mid+1;\n" +
-                    "        } else if (value < cur) {\n" +
-                    "            max = mid-1;\n" +
-                    "        } else {\n" +
-                    "            break;\n" +
-                    "        }\n" +
+            Code.SLICE.source("while(max >= min) {" +
+                    "        mid = ((unsigned int)min + (unsigned int)max) >> 1;" +
+                    "        cur = _intsetGet(is,mid);" +
+                    "        if (value > cur) {" +
+                    "            min = mid+1;" +
+                    "        } else if (value < cur) {" +
+                    "            max = mid-1;" +
+                    "        } else {" +
+                    "            break;" +
+                    "        }" +
                     "    }")
                     .interpretation("二分查找，找到插入的位置，这里要么找到现有值元素的位置，要么找到要插入的位置");
             //...
@@ -188,21 +188,21 @@ public class SaddCommandExecuteTrace {
                 function = "static intset *intsetUpgradeAndAdd(intset *is, int64_t value) "
         )
         public void intsetUpgradeAndAdd(){
-               Code.SLICE.source("uint8_t curenc = intrev32ifbe(is->encoding);\n" +
+               Code.SLICE.source("uint8_t curenc = intrev32ifbe(is->encoding);" +
                        "    uint8_t newenc = _intsetValueEncoding(value);")
                        .interpretation("拿到当前的编码方式和新的编码方式");
                //..
                Code.SLICE.source("is->encoding = intrev32ifbe(newenc);")
                        .interpretation("首先变更set的编码方式为新的编码方式");
                //...
-               Code.SLICE.source("while(length--)\n" +
+               Code.SLICE.source("while(length--)" +
                        "        _intsetSet(is,length+prepend,_intsetGetEncoded(is,length,curenc));")
                        .interpretation("将原有的值一个个的往后移");
 
-                Code.SLICE.source("if (prepend)\n" +
-                        "        _intsetSet(is,0,value);\n" +
-                        "    else\n" +
-                        "        _intsetSet(is,intrev32ifbe(is->length),value);\n")
+                Code.SLICE.source("if (prepend)" +
+                        "        _intsetSet(is,0,value);" +
+                        "    else" +
+                        "        _intsetSet(is,intrev32ifbe(is->length),value);")
                         .interpretation("升级的时候，要插入的元素要么在头部要么在尾部");
                //..
         }
@@ -213,7 +213,7 @@ public class SaddCommandExecuteTrace {
                 function = "void setTypeConvert(robj *setobj, int enc) "
         )
         public void setTypeConvert(){
-                Code.SLICE.source("serverAssertWithInfo(NULL,setobj,setobj->type == OBJ_SET &&\n" +
+                Code.SLICE.source("serverAssertWithInfo(NULL,setobj,setobj->type == OBJ_SET &&" +
                         "                             setobj->encoding == OBJ_ENCODING_INTSET);")
                         .interpretation("确保升级的是set类型，并且它原来的编码方式是intset");
                 Code.SLICE.source("if (enc == OBJ_ENCODING_HT)")
@@ -226,10 +226,10 @@ public class SaddCommandExecuteTrace {
                 Code.SLICE.source("dictExpand(d,intsetLen(setobj->ptr));")
                         .interpretation("申请足够的空间，确保不需要rehash");
 
-                Code.SLICE.source("si = setTypeInitIterator(setobj);\n" +
-                        "        while (setTypeNext(si,&element,&intele) != -1) {\n" +
-                        "            element = sdsfromlonglong(intele);\n" +
-                        "            serverAssert(dictAdd(d,element,NULL) == DICT_OK);\n" +
+                Code.SLICE.source("si = setTypeInitIterator(setobj);" +
+                        "        while (setTypeNext(si,&element,&intele) != -1) {" +
+                        "            element = sdsfromlonglong(intele);" +
+                        "            serverAssert(dictAdd(d,element,NULL) == DICT_OK);" +
                         "        }")
                         .interpretation("遍历原有的intset结构，取到对应的元素值，一个的加入到字典中去");
                 //..
