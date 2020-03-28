@@ -10,8 +10,8 @@ import paxi.maokitty.source.util.Code;
  * Created by maokitty on 20/3/28.
  */
 @Background(
-        target = "了解启动redis后是如何加载rdb数据的",
-        conclusion = "",
+        target = "了解启动redis后是如何加载数据的",
+        conclusion = "1:启动的时候就会执行加载AOF或者RDB；2：加载RDB的文件解析其实就是按照既定的规则执行反序列化",
         sourceCodeProjectName = "redis",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
