@@ -41,13 +41,13 @@ public class SetCommandExecuteTrace {
     )
     public void processInlineBuffer(){
         //...
-        Code.SLICE.source(" for (c->argc = 0, j = 0; j < argc; j++) {\n" +
-                "        if (sdslen(argv[j])) {\n" +
-                "            c->argv[c->argc] = createObject(OBJ_STRING,argv[j]);\n" +
-                "            c->argc++;\n" +
-                "        } else {\n" +
-                "            sdsfree(argv[j]);\n" +
-                "        }\n" +
+        Code.SLICE.source(" for (c->argc = 0, j = 0; j < argc; j++) {" +
+                "        if (sdslen(argv[j])) {" +
+                "            c->argv[c->argc] = createObject(OBJ_STRING,argv[j]);" +
+                "            c->argc++;" +
+                "        } else {" +
+                "            sdsfree(argv[j]);" +
+                "        }" +
                 "    }")
                 .interpretation("对于读到的每一个参数，都会创建一个object放入到 argv 中");
     }
@@ -58,20 +58,20 @@ public class SetCommandExecuteTrace {
             function = "robj *createObject(int type, void *ptr)"
     )
     public void createObject(){
-        Code.SLICE.source(" robj *o = zmalloc(sizeof(*o));\n" +
-                "    o->type = type;\n" +
-                "    o->encoding = OBJ_ENCODING_RAW;\n" +
-                "    o->ptr = ptr;\n" +
-                "    o->refcount = 1;\n" +
-                "\n" +
-                "    /* Set the LRU to the current lruclock (minutes resolution), or\n" +
-                "     * alternatively the LFU counter. */\n" +
-                "    if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {\n" +
-                "        o->lru = (LFUGetTimeInMinutes()<<8) | LFU_INIT_VAL;\n" +
-                "    } else {\n" +
-                "        o->lru = LRU_CLOCK();\n" +
-                "    }\n" +
-                "    return o;\n")
+        Code.SLICE.source(" robj *o = zmalloc(sizeof(*o));" +
+                "    o->type = type;" +
+                "    o->encoding = OBJ_ENCODING_RAW;" +
+                "    o->ptr = ptr;" +
+                "    o->refcount = 1;" +
+                "" +
+                "    /* Set the LRU to the current lruclock (minutes resolution), or" +
+                "     * alternatively the LFU counter. */" +
+                "    if (server.maxmemory_policy & MAXMEMORY_FLAG_LFU) {" +
+                "        o->lru = (LFUGetTimeInMinutes()<<8) | LFU_INIT_VAL;" +
+                "    } else {" +
+                "        o->lru = LRU_CLOCK();" +
+                "    }" +
+                "    return o;")
                 .interpretation("创建 redisObject 对象，创建默认指定 encoding 为 OBJ_ENCODING_RAW");
     }
     @Trace(
@@ -80,14 +80,14 @@ public class SetCommandExecuteTrace {
             function = "struct define of redisObject "
     )
     public void structDefineOfRedisObject(){
-        Code.SLICE.source("typedef struct redisObject {\n" +
-                "    unsigned type:4;\n" +
-                "    unsigned encoding:4;\n" +
-                "    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or\n" +
-                "                            * LFU data (least significant 8 bits frequency\n" +
-                "                            * and most significant 16 bits access time). */\n" +
-                "    int refcount;\n" +
-                "    void *ptr;\n" +
+        Code.SLICE.source("typedef struct redisObject {" +
+                "    unsigned type:4;" +
+                "    unsigned encoding:4;" +
+                "    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or" +
+                "                            * LFU data (least significant 8 bits frequency" +
+                "                            * and most significant 16 bits access time). */" +
+                "    int refcount;" +
+                "    void *ptr;" +
                 "} robj;")
                 .interpretation("redisObject的定义")
                 .interpretation("1:type 占4bit,指string/list/hash/zset/set")
@@ -135,8 +135,8 @@ public class SetCommandExecuteTrace {
     )
     public void initServerConfig(){
         //...
-        Code.SLICE.source(" server.commands = dictCreate(&commandTableDictType,NULL);\n" +
-                "    server.orig_commands = dictCreate(&commandTableDictType,NULL);\n" +
+        Code.SLICE.source(" server.commands = dictCreate(&commandTableDictType,NULL);" +
+                "    server.orig_commands = dictCreate(&commandTableDictType,NULL);" +
                 "    populateCommandTable();")
                 .interpretation("在redis执行main方法时候，便会主动加载服务的配置，其中一项就是初始化命令列表");
         //...
@@ -185,14 +185,14 @@ public class SetCommandExecuteTrace {
             index = 10,
             originClassName = "object.c",
             function = "robj *tryObjectEncoding(robj *o) ",
-            introduction = "robj即结构体 redisObject ，它的结构如下：typedef struct redisObject {\n" +
-                    "    unsigned type:4;\n //对象类型 比如 string,hash,list,set,zset" +
-                    "    unsigned encoding:4;\n //编码类型 表明当前数据采用哪种数据结构实现" +
-                    "    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or\n" +
-                    "                            * LFU data (least significant 8 bits frequency\n" +
-                    "                            * and most significant 16 bits access time). */\n //lru计时时钟 记录对象最后一次被访问的时间" +
-                    "    int refcount;\n //引用次数" +
-                    "    void *ptr;\n //数据指针" +
+            introduction = "robj即结构体 redisObject ，它的结构如下：typedef struct redisObject {" +
+                    "    unsigned type:4; //对象类型 比如 string,hash,list,set,zset" +
+                    "    unsigned encoding:4; //编码类型 表明当前数据采用哪种数据结构实现" +
+                    "    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or" +
+                    "                            * LFU data (least significant 8 bits frequency" +
+                    "                            * and most significant 16 bits access time). */ //lru计时时钟 记录对象最后一次被访问的时间" +
+                    "    int refcount; //引用次数" +
+                    "    void *ptr; //数据指针" +
                     "} robj;用来表示一个redis的值，也就是说暴漏出去的虽然是string,但是里面会使用 redisObject来包装一层"
     )
     public void tryObjectEncoding(){
@@ -208,7 +208,7 @@ public class SetCommandExecuteTrace {
         Code.SLICE.source("if (len <= 20 && string2l(s,len,&value))")
                 .interpretation("判断字符串的长度如果小于20并且能够转成long  类型，执行转成long 的逻辑,并结果存储到value");
         //...
-        Code.SLICE.source("       o->encoding = OBJ_ENCODING_INT;\n" +
+        Code.SLICE.source("       o->encoding = OBJ_ENCODING_INT;" +
                      "            o->ptr = (void*) value;")
                 .interpretation("判定好是可以转成long则设定编码方式为int,同时数据指针就直接存储值");
         //...
@@ -218,10 +218,10 @@ public class SetCommandExecuteTrace {
         Code.SLICE.source("     emb = createEmbeddedStringObject(s,sdslen(s));")
                 .interpretation("将值使用emb编码后再返回");
         //...
-        Code.SLICE.source("if (o->encoding == OBJ_ENCODING_RAW &&\n" +
-                        "        sdsavail(s) > len/10)\n" +
-                        "    {\n" +
-                        "        o->ptr = sdsRemoveFreeSpace(o->ptr);\n" +
+        Code.SLICE.source("if (o->encoding == OBJ_ENCODING_RAW &&" +
+                        "        sdsavail(s) > len/10)" +
+                        "    {" +
+                        "        o->ptr = sdsRemoveFreeSpace(o->ptr);" +
                         "    }")
                 .interpretation("如果超过了emb限制，则尽量的去较少浪费的空间,将原始的内容直接返回");
         //...
@@ -244,21 +244,21 @@ public class SetCommandExecuteTrace {
             function = "void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply)"
     )
     public void setGenericCommand(){
-        Code.SLICE.source(" if (expire) {\n" +
-                "        if (getLongLongFromObjectOrReply(c, expire, &milliseconds, NULL) != C_OK)\n" +
-                "            return;\n" +
-                "        if (milliseconds <= 0) {\n" +
-                "            addReplyErrorFormat(c,\"invalid expire time in %s\",c->cmd->name);\n" +
-                "            return;\n" +
-                "        }\n" +
-                "        if (unit == UNIT_SECONDS) milliseconds *= 1000;\n" +
-                "    }\n")
+        Code.SLICE.source(" if (expire) {" +
+                "        if (getLongLongFromObjectOrReply(c, expire, &milliseconds, NULL) != C_OK)" +
+                "            return;" +
+                "        if (milliseconds <= 0) {" +
+                "            addReplyErrorFormat(c,\"invalid expire time in %s\",c->cmd->name);" +
+                "            return;" +
+                "        }" +
+                "        if (unit == UNIT_SECONDS) milliseconds *= 1000;" +
+                "    }")
                 .interpretation("如果设置了过期时间，先进行过期时间的类型转换，转换正常根据单位作出过期时间具体值的计算");
-        Code.SLICE.source("  if ((flags & OBJ_SET_NX && lookupKeyWrite(c->db,key) != NULL) ||\n" +
-                "        (flags & OBJ_SET_XX && lookupKeyWrite(c->db,key) == NULL))\n" +
-                "    {\n" +
-                "        addReply(c, abort_reply ? abort_reply : shared.nullbulk);\n" +
-                "        return;\n" +
+        Code.SLICE.source("  if ((flags & OBJ_SET_NX && lookupKeyWrite(c->db,key) != NULL) ||" +
+                "        (flags & OBJ_SET_XX && lookupKeyWrite(c->db,key) == NULL))" +
+                "    {" +
+                "        addReply(c, abort_reply ? abort_reply : shared.nullbulk);" +
+                "        return;" +
                 "    }")
                 .interpretation("如果是NX或者XX命令先按照条件看是否满足，满足条件才执行存储");
         //...
@@ -273,10 +273,10 @@ public class SetCommandExecuteTrace {
             function = "void setKey(redisDb *db, robj *key, robj *val) "
     )
     public void setKey(){
-        Code.SLICE.source(" if (lookupKeyWrite(db,key) == NULL) {\n" +
-                "        dbAdd(db,key,val);\n" +
-                "    } else {\n" +
-                "        dbOverwrite(db,key,val);\n" +
+        Code.SLICE.source(" if (lookupKeyWrite(db,key) == NULL) {" +
+                "        dbAdd(db,key,val);" +
+                "    } else {" +
+                "        dbOverwrite(db,key,val);" +
                 "    }")
                 .interpretation("如果之前没有存过，就直接添加，否则去覆盖");
     }
@@ -288,7 +288,7 @@ public class SetCommandExecuteTrace {
     )
 
     public void lookupKeyWrite(){
-        Code.SLICE.source("  expireIfNeeded(db,key);\n" +
+        Code.SLICE.source("  expireIfNeeded(db,key);" +
                 "    return lookupKey(db,key,LOOKUP_NONE);")
                 .interpretation("1:首先检查key是否已经过期了，如果是master,那么过期事件发生会传播出去，如果是slave那么只会返回过期的结果而不做具体的操作")
                 .interpretation("2:从底层存储的db(实际是个dict)中查找对应的key是否存在，如果存在返回这个value,如果不存在则返回NULL")
@@ -301,7 +301,7 @@ public class SetCommandExecuteTrace {
             function = "void dbAdd(redisDb *db, robj *key, robj *val) "
     )
     public void dbAdd(){
-            Code.SLICE.source(" sds copy = sdsdup(key->ptr);\n" +
+            Code.SLICE.source(" sds copy = sdsdup(key->ptr);" +
                     "    int retval = dictAdd(db->dict, copy, val);")
                     .interpretation("首选拷贝出原来的值，然后再讲值加到dict中,后续增加对象的引用，处理过期等等");
     }
@@ -325,42 +325,42 @@ public class SetCommandExecuteTrace {
     public void sdsnewlen(){
         //...
         Code.SLICE.source("char type = sdsReqType(initlen);")
-                .interpretation("根据要新建的字符串获取不同的类型,类型就是宏定义的  0 1 2 3 4这5个取值的类型，代表不同的 sdshdr 结构\n");
+                .interpretation("根据要新建的字符串获取不同的类型,类型就是宏定义的  0 1 2 3 4这5个取值的类型，代表不同的 sdshdr 结构");
 
         //...
-        Code.SLICE.source("   switch(type) {\n" +
-                "        case SDS_TYPE_5: {\n" +
-                "            *fp = type | (initlen << SDS_TYPE_BITS);\n" +
-                "            break;\n" +
-                "        }\n" +
-                "        case SDS_TYPE_8: {\n" +
-                "            SDS_HDR_VAR(8,s);\n" +
-                "            sh->len = initlen;\n" +
-                "            sh->alloc = initlen;\n" +
-                "            *fp = type;\n" +
-                "            break;\n" +
-                "        }\n" +
-                "        case SDS_TYPE_16: {\n" +
-                "            SDS_HDR_VAR(16,s);\n" +
-                "            sh->len = initlen;\n" +
-                "            sh->alloc = initlen;\n" +
-                "            *fp = type;\n" +
-                "            break;\n" +
-                "        }\n" +
-                "        case SDS_TYPE_32: {\n" +
-                "            SDS_HDR_VAR(32,s);\n" +
-                "            sh->len = initlen;\n" +
-                "            sh->alloc = initlen;\n" +
-                "            *fp = type;\n" +
-                "            break;\n" +
-                "        }\n" +
-                "        case SDS_TYPE_64: {\n" +
-                "            SDS_HDR_VAR(64,s);\n" +
-                "            sh->len = initlen;\n" +
-                "            sh->alloc = initlen;\n" +
-                "            *fp = type;\n" +
-                "            break;\n" +
-                "        }\n" +
+        Code.SLICE.source("   switch(type) {" +
+                "        case SDS_TYPE_5: {" +
+                "            *fp = type | (initlen << SDS_TYPE_BITS);" +
+                "            break;" +
+                "        }" +
+                "        case SDS_TYPE_8: {" +
+                "            SDS_HDR_VAR(8,s);" +
+                "            sh->len = initlen;" +
+                "            sh->alloc = initlen;" +
+                "            *fp = type;" +
+                "            break;" +
+                "        }" +
+                "        case SDS_TYPE_16: {" +
+                "            SDS_HDR_VAR(16,s);" +
+                "            sh->len = initlen;" +
+                "            sh->alloc = initlen;" +
+                "            *fp = type;" +
+                "            break;" +
+                "        }" +
+                "        case SDS_TYPE_32: {" +
+                "            SDS_HDR_VAR(32,s);" +
+                "            sh->len = initlen;" +
+                "            sh->alloc = initlen;" +
+                "            *fp = type;" +
+                "            break;" +
+                "        }" +
+                "        case SDS_TYPE_64: {" +
+                "            SDS_HDR_VAR(64,s);" +
+                "            sh->len = initlen;" +
+                "            sh->alloc = initlen;" +
+                "            *fp = type;" +
+                "            break;" +
+                "        }" +
                 "    }")
                 .interpretation("类型不同创建不同的结构");
     }
@@ -371,19 +371,19 @@ public class SetCommandExecuteTrace {
             function = "static inline char sdsReqType(size_t string_size) "
     )
     public void sdsReqType(){
-        Code.SLICE.source("if (string_size < 1<<5)\n" +
-                    "        return SDS_TYPE_5;\n" +
-                    "    if (string_size < 1<<8)\n" +
-                    "        return SDS_TYPE_8;\n" +
-                    "    if (string_size < 1<<16)\n" +
-                    "        return SDS_TYPE_16;\n" +
-                    "#if (LONG_MAX == LLONG_MAX)\n" +
-                    "    if (string_size < 1ll<<32)\n" +
-                    "        return SDS_TYPE_32;\n" +
-                    "    return SDS_TYPE_64;\n" +
-                    "#else\n" +
-                    "    return SDS_TYPE_32;\n" +
-                    "#endif\n" +
+        Code.SLICE.source("if (string_size < 1<<5)" +
+                    "        return SDS_TYPE_5;" +
+                    "    if (string_size < 1<<8)" +
+                    "        return SDS_TYPE_8;" +
+                    "    if (string_size < 1<<16)" +
+                    "        return SDS_TYPE_16;" +
+                    "#if (LONG_MAX == LLONG_MAX)" +
+                    "    if (string_size < 1ll<<32)" +
+                    "        return SDS_TYPE_32;" +
+                    "    return SDS_TYPE_64;" +
+                    "#else" +
+                    "    return SDS_TYPE_32;" +
+                    "#endif" +
                 "}")
                 .interpretation("根据字符串的长度，来选取不同的类型,长度小于 32用 SDS_TYPE_5 在32和256之间用SDS_TYPE_8 依此类推");
     }
@@ -395,11 +395,11 @@ public class SetCommandExecuteTrace {
             function = "struct define of sdshdr8"
     )
     public void structOfSdshdr8(){
-      Code.SLICE.source("struct __attribute__ ((__packed__)) sdshdr8 {\n" +
-              "    uint8_t len; /* 已经使用的长度 */\n" +
-              "    uint8_t alloc; /* 分配的长度 */\n" +
-              "    unsigned char flags; /* 3 lsb of type, 5 unused bits */\n" +
-              "    char buf[];\n" +
+      Code.SLICE.source("struct __attribute__ ((__packed__)) sdshdr8 {" +
+              "    uint8_t len; /* 已经使用的长度 */" +
+              "    uint8_t alloc; /* 分配的长度 */" +
+              "    unsigned char flags; /* 3 lsb of type, 5 unused bits */" +
+              "    char buf[];" +
               "};")
               .interpretation("len表示使用了的长度，alloc表示分配的空间长度，flags的最低三个bit用来表示header的类型,类型比如 sdshdr8")
               .interpretation("1：uint8_t指的是 unsigned char ,大小为1字节 char buf[]本身不计算大小,只是真实数据存储的时候，会在 buf最后添加 1个 \0,为了和C做兼容,方便利用C的一些函数")

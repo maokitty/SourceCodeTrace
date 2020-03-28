@@ -53,8 +53,8 @@ public class HealthCountsStreamTrace {
     @Trace(
             index = 2,
             originClassName = "com.netflix.hystrix.metric.consumer.BucketedRollingCounterStream",
-            function = "protected BucketedRollingCounterStream(HystrixEventStream<Event> stream, final int numBuckets, int bucketSizeInMs,\n"+
-                "final Func2<Bucket, Event, Bucket> appendRawEventToBucket,\n"+
+            function = "protected BucketedRollingCounterStream(HystrixEventStream<Event> stream, final int numBuckets, int bucketSizeInMs,"+
+                "final Func2<Bucket, Event, Bucket> appendRawEventToBucket,"+
                 "final Func2<Output, Bucket, Output> reduceBucket)",
             introduction = "HealthCountsStream的父构造函数"
     )
@@ -63,32 +63,32 @@ public class HealthCountsStreamTrace {
         Code.SLICE.source("super(stream, numBuckets, bucketSizeInMs, appendRawEventToBucket);")
                 .interpretation("构造每个桶的可观察的对象，以便计算每个桶内的指标");
 
-        Code.SLICE.source(" Func1<Observable<Bucket>, Observable<Output>> reduceWindowToSummary = new Func1<Observable<Bucket>, Observable<Output>>() {\n" +
-                "            @Override\n" +
-                "            public Observable<Output> call(Observable<Bucket> window) {\n" +
-                "                return window.scan(getEmptyOutputValue(), reduceBucket).skip(numBuckets);\n" +
-                "            }\n" +
+        Code.SLICE.source(" Func1<Observable<Bucket>, Observable<Output>> reduceWindowToSummary = new Func1<Observable<Bucket>, Observable<Output>>() {" +
+                "            @Override" +
+                "            public Observable<Output> call(Observable<Bucket> window) {" +
+                "                return window.scan(getEmptyOutputValue(), reduceBucket).skip(numBuckets);" +
+                "            }" +
                 "        };")
                 .interpretation("负责将时间窗口内的所有桶的结果全部计算出来，算出在这个时间窗口内，有多少处理成功，有多少处理失败,失败的比例是多少")
                 .interpretation("1:scan表示对发过来的每一项都应用reduceBucket，reduceBucket即healthCheckAccumulator，一个窗口会同时发出来多个桶的数据，因而需要算出每一个桶的成功失败数")
                 .interpretation("2:当计算完成每一个桶的结果之后，开始与下一个桶的结果进行合并计算，这些合并计算的都是中间结果，不需要向后面传递，因此省略掉前面的桶数的计算，返回最终汇总的结果")
                 ;
-        Code.SLICE.source(" this.sourceStream = bucketedStream      //stream broken up into buckets\n" +
-                "                .window(numBuckets, 1)          //emit overlapping windows of buckets\n" +
-                "                .flatMap(reduceWindowToSummary) //convert a window of bucket-summaries into a single summary\n" +
-                "                .doOnSubscribe(new Action0() {\n" +
-                "                    @Override\n" +
-                "                    public void call() {\n" +
-                "                        isSourceCurrentlySubscribed.set(true);\n" +
-                "                    }\n" +
-                "                })\n" +
-                "                .doOnUnsubscribe(new Action0() {\n" +
-                "                    @Override\n" +
-                "                    public void call() {\n" +
-                "                        isSourceCurrentlySubscribed.set(false);\n" +
-                "                    }\n" +
-                "                })\n" +
-                "                .share()                        //multiple subscribers should get same data\n" +
+        Code.SLICE.source(" this.sourceStream = bucketedStream      //stream broken up into buckets" +
+                "                .window(numBuckets, 1)          //emit overlapping windows of buckets" +
+                "                .flatMap(reduceWindowToSummary) //convert a window of bucket-summaries into a single summary" +
+                "                .doOnSubscribe(new Action0() {" +
+                "                    @Override" +
+                "                    public void call() {" +
+                "                        isSourceCurrentlySubscribed.set(true);" +
+                "                    }" +
+                "                })" +
+                "                .doOnUnsubscribe(new Action0() {" +
+                "                    @Override" +
+                "                    public void call() {" +
+                "                        isSourceCurrentlySubscribed.set(false);" +
+                "                    }" +
+                "                })" +
+                "                .share()                        //multiple subscribers should get same data" +
                 "                .onBackpressureDrop();          //if there are slow consumers, data should not buffer")
                 .interpretation("对整个时间窗口的数据做处理")
                 .interpretation("1:bucketedStream已经将每个窗口内的执行结果放入了一个桶里面")
@@ -103,7 +103,7 @@ public class HealthCountsStreamTrace {
     @Trace(
             index = 3,
             originClassName = "com.netflix.hystrix.metric.consumer.BucketedCounterStream",
-            function = " protected BucketedCounterStream(final HystrixEventStream<Event> inputEventStream, final int numBuckets, final int bucketSizeInMs,\n" +
+            function = " protected BucketedCounterStream(final HystrixEventStream<Event> inputEventStream, final int numBuckets, final int bucketSizeInMs," +
                         " final Func2<Bucket, Event, Bucket> appendRawEventToBucket)",
             introduction = "BucketedRollingCounterStream的父构造函数"
     )
@@ -114,25 +114,25 @@ public class HealthCountsStreamTrace {
     @KeyPoint
     public void BucketedCounterStreamConstrutor(){
         //...
-        Code.SLICE.source(" this.reduceBucketToSummary = new Func1<Observable<Event>, Observable<Bucket>>() {\n" +
-                "            @Override\n" +
-                "            public Observable<Bucket> call(Observable<Event> eventBucket) {\n" +
-                "                return eventBucket.reduce(getEmptyBucketSummary(), appendRawEventToBucket);\n" +
-                "            }\n" +
+        Code.SLICE.source(" this.reduceBucketToSummary = new Func1<Observable<Event>, Observable<Bucket>>() {" +
+                "            @Override" +
+                "            public Observable<Bucket> call(Observable<Event> eventBucket) {" +
+                "                return eventBucket.reduce(getEmptyBucketSummary(), appendRawEventToBucket);" +
+                "            }" +
                 "        };")
                 .interpretation("event对应的是传入的参数，bucket即返回值，也就是根据hystrix产生的事件，对应的将健康检查的返回结果放入桶中,所谓的桶其实也就是一个long类型的数组，每个位置存储的值都有对应的含义")
                 .interpretation("1:getEmptyBucketSummary对于HealthCountsStream来说就是一个空的数组")
                 .interpretation("2:appendRawEventToBucket就是就是appendEventToBucket，它的作用就是把每次执行的结果都按照顺序扔到桶里面去，相当于是创建了一个桶");
         //...
-        Code.SLICE.source(" this.bucketedStream = Observable.defer(new Func0<Observable<Bucket>>() {\n" +
-                "            @Override\n" +
-                "            public Observable<Bucket> call() {\n" +
-                "                return inputEventStream\n" +
-                "                        .observe()\n" +
-                "                        .window(bucketSizeInMs, TimeUnit.MILLISECONDS) //bucket it by the counter window so we can emit to the next operator in time chunks, not on every OnNext\n" +
-                "                        .flatMap(reduceBucketToSummary)                //for a given bucket, turn it into a long array containing counts of event types\n" +
-                "                        .startWith(emptyEventCountsToStart);           //start it with empty arrays to make consumer logic as generic as possible (windows are always full)\n" +
-                "            }\n" +
+        Code.SLICE.source(" this.bucketedStream = Observable.defer(new Func0<Observable<Bucket>>() {" +
+                "            @Override" +
+                "            public Observable<Bucket> call() {" +
+                "                return inputEventStream" +
+                "                        .observe()" +
+                "                        .window(bucketSizeInMs, TimeUnit.MILLISECONDS) //bucket it by the counter window so we can emit to the next operator in time chunks, not on every OnNext" +
+                "                        .flatMap(reduceBucketToSummary)                //for a given bucket, turn it into a long array containing counts of event types" +
+                "                        .startWith(emptyEventCountsToStart);           //start it with empty arrays to make consumer logic as generic as possible (windows are always full)" +
+                "            }" +
                 "        });")
                 .interpretation("bucketedStream被订阅的时候，开始产生作用")
                 .interpretation("1:将传过来的数据按照计算好的 时间 在时间窗口里面缓冲")
@@ -176,37 +176,37 @@ public class HealthCountsStreamTrace {
     )
     public void toObservable(){
         //...
-        Code.SLICE.source(" final Action0 terminateCommandCleanup = new Action0() {\n" +
-                "\n" +
-                "            @Override\n" +
-                "            public void call() {\n" +
-                "                if (_cmd.commandState.compareAndSet(CommandState.OBSERVABLE_CHAIN_CREATED, CommandState.TERMINAL)) {\n" +
-                "                    handleCommandEnd(false); //user code never ran\n" +
-                "                } else if (_cmd.commandState.compareAndSet(CommandState.USER_CODE_EXECUTED, CommandState.TERMINAL)) {\n" +
-                "                    handleCommandEnd(true); //user code did run\n" +
-                "                }\n" +
-                "            }\n" +
+        Code.SLICE.source(" final Action0 terminateCommandCleanup = new Action0() {" +
+                "" +
+                "            @Override" +
+                "            public void call() {" +
+                "                if (_cmd.commandState.compareAndSet(CommandState.OBSERVABLE_CHAIN_CREATED, CommandState.TERMINAL)) {" +
+                "                    handleCommandEnd(false); //user code never ran" +
+                "                } else if (_cmd.commandState.compareAndSet(CommandState.USER_CODE_EXECUTED, CommandState.TERMINAL)) {" +
+                "                    handleCommandEnd(true); //user code did run" +
+                "                }" +
+                "            }" +
                 "        };")
                 .interpretation("定义如果执行\"用户的方法\"完成的执行逻辑");
         //...
-        Code.SLICE.source("final Func0<Observable<R>> applyHystrixSemantics = new Func0<Observable<R>>() {\n" +
-                "            @Override\n" +
-                "            public Observable<R> call() {\n" +
-                "                if (commandState.get().equals(CommandState.UNSUBSCRIBED)) {\n" +
-                "                    return Observable.never();\n" +
-                "                }\n" +
-                "                return applyHystrixSemantics(_cmd);\n" +
-                "            }\n" +
+        Code.SLICE.source("final Func0<Observable<R>> applyHystrixSemantics = new Func0<Observable<R>>() {" +
+                "            @Override" +
+                "            public Observable<R> call() {" +
+                "                if (commandState.get().equals(CommandState.UNSUBSCRIBED)) {" +
+                "                    return Observable.never();" +
+                "                }" +
+                "                return applyHystrixSemantics(_cmd);" +
+                "            }" +
                 "        };")
                 .interpretation("构建Hystrix的语义处理逻辑函数，这是核心的实现Hystrix逻辑的地方");
         //...
         Code.SLICE.source("return Observable.defer(" +
                 "...." +
-                "Observable<R> hystrixObservable =\n" +
+                "Observable<R> hystrixObservable =" +
                 "                        Observable.defer(applyHystrixSemantics)" +
                 "..." +
-                "   return afterCache\n" +
-                "                        .doOnTerminate(terminateCommandCleanup)     // perform cleanup once (either on normal terminal state (this line), or unsubscribe (next line))\n" +
+                "   return afterCache" +
+                "                        .doOnTerminate(terminateCommandCleanup)     // perform cleanup once (either on normal terminal state (this line), or unsubscribe (next line))" +
                 "...)")
                 .interpretation("最终创建Observable对象，关联对应的操作动作。创建方式为 defer,另外在执行之前，如果缓存命中会首先走缓存的逻辑(本次分析以实际执行为主，缓存略)");
     }
@@ -242,16 +242,16 @@ public class HealthCountsStreamTrace {
             function = "public boolean allowRequest()"
     )
     public void allowRequest(){
-        Code.SLICE.source("if (properties.circuitBreakerForceOpen().get()) {\n" +
-                "                // properties have asked us to force the circuit open so we will allow NO requests\n" +
-                "                return false;\n" +
-                "            }\n")
+        Code.SLICE.source("if (properties.circuitBreakerForceOpen().get()) {" +
+                "                // properties have asked us to force the circuit open so we will allow NO requests" +
+                "                return false;" +
+                "            }")
                 .interpretation("获取 HystrixCommandProperties.Setter.withCircuitBreakerForceOpen设置值，看是否要强制使用断路器,如果配置开启，则直接走短路逻辑");
-        Code.SLICE.source(" if (properties.circuitBreakerForceClosed().get()) {\n" +
-                "                // we still want to allow isOpen() to perform it's calculations so we simulate normal behavior\n" +
-                "                isOpen();\n" +
-                "                // properties have asked us to ignore errors so we will ignore the results of isOpen and just allow all traffic through\n" +
-                "                return true;\n" +
+        Code.SLICE.source(" if (properties.circuitBreakerForceClosed().get()) {" +
+                "                // we still want to allow isOpen() to perform it's calculations so we simulate normal behavior" +
+                "                isOpen();" +
+                "                // properties have asked us to ignore errors so we will ignore the results of isOpen and just allow all traffic through" +
+                "                return true;" +
                 "            }")
                 .interpretation("如果 HystrixCommandProperties.Setter.withCircuitBreakerForceClosed 设置为强制不使用断路器，仍然去模拟正常的表现，但是不管正常数据如何，直接返回执行用户的调用逻辑 run/construct");
         Code.SLICE.source("return !isOpen() || allowSingleTest();")
@@ -269,20 +269,20 @@ public class HealthCountsStreamTrace {
             tip = "counterSubject使用"
     )
     public void isOpen(){
-        Code.SLICE.source("if (circuitOpen.get()) {\n" +
-                "                // if we're open we immediately return true and don't bother attempting to 'close' ourself as that is left to allowSingleTest and a subsequent successful test to close\n" +
-                "                return true;\n" +
+        Code.SLICE.source("if (circuitOpen.get()) {" +
+                "                // if we're open we immediately return true and don't bother attempting to 'close' ourself as that is left to allowSingleTest and a subsequent successful test to close" +
+                "                return true;" +
                 "            }")
                 .interpretation("如果断路器当前已经开启了，直接返回应该是开启服务的");
         Code.SLICE.source("HealthCounts health = metrics.getHealthCounts();")
                 .interpretation("获取健康统计的结果，即获取上述订阅流的counterSubject存储的结果");
-        Code.SLICE.source("if (health.getTotalRequests() < properties.circuitBreakerRequestVolumeThreshold().get()) {\n" +
-                "                // we are not past the minimum volume threshold for the statisticalWindow so we'll return false immediately and not calculate anything\n" +
-                "                return false;\n" +
+        Code.SLICE.source("if (health.getTotalRequests() < properties.circuitBreakerRequestVolumeThreshold().get()) {" +
+                "                // we are not past the minimum volume threshold for the statisticalWindow so we'll return false immediately and not calculate anything" +
+                "                return false;" +
                 "            }")
                 .interpretation("如果当前窗口内总的请求量还是少于配置的circuitBreakerRequestVolumeThreshold，断路器仍然关闭，不管错误了多少,仍然执行用户的 run/construct");
-        Code.SLICE.source("if (health.getErrorPercentage() < properties.circuitBreakerErrorThresholdPercentage().get()) {\n" +
-                "                return false;\n" +
+        Code.SLICE.source("if (health.getErrorPercentage() < properties.circuitBreakerErrorThresholdPercentage().get()) {" +
+                "                return false;" +
                 "            }")
                 .interpretation("如果错误的次数百分比比配置的要小，断路器仍然关闭，执行用户的 run/construct方法 （错误比的计算逻辑:(int) ((double) errorCount / totalCount * 100);）");
         Code.SLICE.source("if (circuitOpen.compareAndSet(false, true))")
@@ -297,15 +297,15 @@ public class HealthCountsStreamTrace {
     public void allowSingleTest(){
         Code.SLICE.source("long timeCircuitOpenedOrWasLastTested = circuitOpenedOrLastTestedTime.get();")
                 .interpretation("已经判定了断路器应该开启，此时判断是否需要再次测试一下能够成功执行,首先获取上次断路器开启的时间");
-        Code.SLICE.source("if (circuitOpen.get() && System.currentTimeMillis() > timeCircuitOpenedOrWasLastTested + properties.circuitBreakerSleepWindowInMilliseconds().get()) {\n" +
-                "                // We push the 'circuitOpenedTime' ahead by 'sleepWindow' since we have allowed one request to try.\n" +
-                "                // If it succeeds the circuit will be closed, otherwise another singleTest will be allowed at the end of the 'sleepWindow'.\n" +
-                "                if (circuitOpenedOrLastTestedTime.compareAndSet(timeCircuitOpenedOrWasLastTested, System.currentTimeMillis())) {\n" +
-                "                    // if this returns true that means we set the time so we'll return true to allow the singleTest\n" +
-                "                    // if it returned false it means another thread raced us and allowed the singleTest before we did\n" +
-                "                    return true;\n" +
-                "                }\n" +
-                "            }\n" +
+        Code.SLICE.source("if (circuitOpen.get() && System.currentTimeMillis() > timeCircuitOpenedOrWasLastTested + properties.circuitBreakerSleepWindowInMilliseconds().get()) {" +
+                "                // We push the 'circuitOpenedTime' ahead by 'sleepWindow' since we have allowed one request to try." +
+                "                // If it succeeds the circuit will be closed, otherwise another singleTest will be allowed at the end of the 'sleepWindow'." +
+                "                if (circuitOpenedOrLastTestedTime.compareAndSet(timeCircuitOpenedOrWasLastTested, System.currentTimeMillis())) {" +
+                "                    // if this returns true that means we set the time so we'll return true to allow the singleTest" +
+                "                    // if it returned false it means another thread raced us and allowed the singleTest before we did" +
+                "                    return true;" +
+                "                }" +
+                "            }" +
                 "            return false;")
                 .interpretation("当断路器当前是开启的时候，并且当前时间已经到了用户自定义(circuitBreakerSleepWindowInMilliseconds)的尝试间隔时间，放过这次执行，去尝试一次用户的方法，否则仍然开启断路器");
 
@@ -317,30 +317,30 @@ public class HealthCountsStreamTrace {
     )
     public void executeCommandAndObserve(){
         //...
-        Code.SLICE.source(" final Func1<Throwable, Observable<R>> handleFallback = new Func1<Throwable, Observable<R>>() {\n" +
-                "            @Override\n" +
-                "            public Observable<R> call(Throwable t) {\n" +
-                "                Exception e = getExceptionFromThrowable(t);\n" +
-                "                executionResult = executionResult.setExecutionException(e);\n" +
-                "                if (e instanceof RejectedExecutionException) {\n" +
-                "                    return handleThreadPoolRejectionViaFallback(e);\n" +
-                "                } else if (t instanceof HystrixTimeoutException) {\n" +
-                "                    return handleTimeoutViaFallback();\n" +
-                "                } else if (t instanceof HystrixBadRequestException) {\n" +
-                "                    return handleBadRequestByEmittingError(e);\n" +
-                "                } else {\n" +
-                "                    /*\n" +
-                "                     * Treat HystrixBadRequestException from ExecutionHook like a plain HystrixBadRequestException.\n" +
-                "                     */\n" +
-                "                    if (e instanceof HystrixBadRequestException) {\n" +
-                "                        eventNotifier.markEvent(HystrixEventType.BAD_REQUEST, commandKey);\n" +
-                "                        return Observable.error(e);\n" +
-                "                    }\n" +
-                "\n" +
-                "                    return handleFailureViaFallback(e);\n" +
-                "                }\n" +
-                "            }\n" +
-                "        };\n")
+        Code.SLICE.source(" final Func1<Throwable, Observable<R>> handleFallback = new Func1<Throwable, Observable<R>>() {" +
+                "            @Override" +
+                "            public Observable<R> call(Throwable t) {" +
+                "                Exception e = getExceptionFromThrowable(t);" +
+                "                executionResult = executionResult.setExecutionException(e);" +
+                "                if (e instanceof RejectedExecutionException) {" +
+                "                    return handleThreadPoolRejectionViaFallback(e);" +
+                "                } else if (t instanceof HystrixTimeoutException) {" +
+                "                    return handleTimeoutViaFallback();" +
+                "                } else if (t instanceof HystrixBadRequestException) {" +
+                "                    return handleBadRequestByEmittingError(e);" +
+                "                } else {" +
+                "                    /*" +
+                "                     * Treat HystrixBadRequestException from ExecutionHook like a plain HystrixBadRequestException." +
+                "                     */" +
+                "                    if (e instanceof HystrixBadRequestException) {" +
+                "                        eventNotifier.markEvent(HystrixEventType.BAD_REQUEST, commandKey);" +
+                "                        return Observable.error(e);" +
+                "                    }" +
+                "" +
+                "                    return handleFailureViaFallback(e);" +
+                "                }" +
+                "            }" +
+                "        };")
                 .interpretation("定义当执行用户方法出现问题时的执行逻辑，比如，执行时放回的异常是 HystrixTimeoutException,则去调用 getFallback 方法");
         //...
         Code.SLICE.source("execution = executeCommandWithSpecifiedIsolation(_cmd);")
@@ -359,11 +359,11 @@ public class HealthCountsStreamTrace {
       Code.SLICE.source("       return getUserExecutionObservable(_cmd);")
               .interpretation("执行用户的 run 方法，将结果通过 Observable.just 转成Observable返回");
         //...
-        Code.SLICE.source(".subscribeOn(threadPool.getScheduler(new Func0<Boolean>() {\n" +
-                "                @Override\n" +
-                "                public Boolean call() {\n" +
-                "                    return properties.executionIsolationThreadInterruptOnTimeout().get() && _cmd.isCommandTimedOut.get() == TimedOutStatus.TIMED_OUT;\n" +
-                "                }\n" +
+        Code.SLICE.source(".subscribeOn(threadPool.getScheduler(new Func0<Boolean>() {" +
+                "                @Override" +
+                "                public Boolean call() {" +
+                "                    return properties.executionIsolationThreadInterruptOnTimeout().get() && _cmd.isCommandTimedOut.get() == TimedOutStatus.TIMED_OUT;" +
+                "                }" +
                 "            }));")
                 .interpretation("放入自定义的线程池中取执行");
         //...
@@ -390,7 +390,7 @@ public class HealthCountsStreamTrace {
     )
     public void executionDone(){
         //...
-        Code.SLICE.source("HystrixCommandCompletion event = HystrixCommandCompletion.from(executionResult, commandKey, threadPoolKey);\n" +
+        Code.SLICE.source("HystrixCommandCompletion event = HystrixCommandCompletion.from(executionResult, commandKey, threadPoolKey);" +
                 "        writeOnlyCommandCompletionSubject.onNext(event);")
                 .interpretation("生成一个完成的时间，写入完成的Subject,也就是Observable对象开始发生变化");
     }
@@ -405,9 +405,9 @@ public class HealthCountsStreamTrace {
         Code.SLICE.source("writeOnlyCommandCompletionSubject = PublishSubject.create();")
                 .interpretation("writeOnlyCommandCompletionSubject本事就是一个PublishSubject");
         //...
-        Code.SLICE.source("writeOnlyCommandCompletionSubject\n" +
-                "                .onBackpressureBuffer()\n" +
-                "                .doOnNext(writeCommandCompletionsToShardedStreams)\n" +
+        Code.SLICE.source("writeOnlyCommandCompletionSubject" +
+                "                .onBackpressureBuffer()" +
+                "                .doOnNext(writeCommandCompletionsToShardedStreams)" +
                 "                .unsafeSubscribe(Subscribers.empty());")
                 .interpretation("writeOnlyCommandCompletionSubject负责把变化调用 writeCommandCompletionsToShardedStreams 处理")
                 .interpretation("1:writeCommandCompletionsToShardedStreams是自定义的一个函数，它主要作用其实就是 产生一个 HystrixCommandCompletionStream 传递给 writeOnlySubject，这样，通过 readOnlySubject 订阅的对象也就得到了变化的结果，然后一层层的下来算出健康值");

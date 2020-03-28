@@ -30,20 +30,20 @@ public class TransactionHandleInSpring {
         Code.SLICE.source("final String joinpointIdentification = methodIdentification(method, targetClass);")
                 .interpretation("获取transaction标注的方法");
         //...
-        Code.SLICE.source("TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);\n" +
-                "   Object retVal = null;\n" +
-                "   try {\n" +
-                "    retVal = invocation.proceedWithInvocation();\n" +
-                "   }\n" +
-                "   catch (Throwable ex) {\n" +
-                "    // target invocation exception\n" +
-                "    completeTransactionAfterThrowing(txInfo, ex);\n" +
-                "    throw ex;\n" +
-                "   }\n" +
-                "   finally {\n" +
-                "    cleanupTransactionInfo(txInfo);\n" +
-                "   }\n" +
-                "   commitTransactionAfterReturning(txInfo);\n" +
+        Code.SLICE.source("TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);" +
+                "   Object retVal = null;" +
+                "   try {" +
+                "    retVal = invocation.proceedWithInvocation();" +
+                "   }" +
+                "   catch (Throwable ex) {" +
+                "    // target invocation exception" +
+                "    completeTransactionAfterThrowing(txInfo, ex);" +
+                "    throw ex;" +
+                "   }" +
+                "   finally {" +
+                "    cleanupTransactionInfo(txInfo);" +
+                "   }" +
+                "   commitTransactionAfterReturning(txInfo);" +
                 "   return retVal;")
                 .interpretation("这里就是标准的事务处理流程  1：获取事务；2：执行用户自己的方法；3：如果执行过程中抛出了异常执行异常抛出后的事务处理逻辑 4：清除事务信息 5：提交事务");
         //...
@@ -80,36 +80,36 @@ public class TransactionHandleInSpring {
                 .interpretation("对于Spring的DataSourceTransactionManager,它就是新建一个 DataSourceTransactionObject 对象，持有ConnectionHolder")
                 .interpretation("1：它的连接对象是从本地线程获取的，也就是说，如果之前在这个线程上执行过事务，那么这里就会复用同一个连接");
         //...
-        Code.SLICE.source("if (isExistingTransaction(transaction)) {\n" +
-                "   // Existing transaction found -> check propagation behavior to find out how to behave.\n" +
-                "   return handleExistingTransaction(definition, transaction, debugEnabled);\n" +
+        Code.SLICE.source("if (isExistingTransaction(transaction)) {" +
+                "   // Existing transaction found -> check propagation behavior to find out how to behave." +
+                "   return handleExistingTransaction(definition, transaction, debugEnabled);" +
                 "  }")
         .interpretation("如果当前事务执行的上下文还有事务，就按照有事务的逻辑处理,否则继续往下执行")
         .interpretation("1:这里的判断标识就是去看ConnectionHolder之前是否有只有过连接，并且连接仍然活着 ");
         //...
-        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_MANDATORY) {\n" +
-                "   throw new IllegalTransactionStateException(\n" +
-                "     \"No existing transaction found for transaction marked with propagation 'mandatory'\");\n" +
+        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_MANDATORY) {" +
+                "   throw new IllegalTransactionStateException(" +
+                "     \"No existing transaction found for transaction marked with propagation 'mandatory'\");" +
                 "  }").interpretation("当前位置必须包含事务，没有事务就抛出异常");
-        Code.SLICE.source("else if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRED ||\n" +
-                "    definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW ||\n" +
-                "    definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NESTED) {\n" +
-                "   SuspendedResourcesHolder suspendedResources = suspend(null);\n" +
-                "   if (debugEnabled) {\n" +
-                "    logger.debug(\"Creating new transaction with name [\" + definition.getName() + \"]: \" + definition);\n" +
-                "   }\n" +
-                "   try {\n" +
-                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);\n" +
-                "    DefaultTransactionStatus status = newTransactionStatus(\n" +
-                "      definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);\n" +
-                "    doBegin(transaction, definition);\n" +
-                "    prepareSynchronization(status, definition);\n" +
-                "    return status;\n" +
-                "   }\n" +
-                "   catch (RuntimeException | Error ex) {\n" +
-                "    resume(null, suspendedResources);\n" +
-                "    throw ex;\n" +
-                "   }\n" +
+        Code.SLICE.source("else if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRED ||" +
+                "    definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW ||" +
+                "    definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NESTED) {" +
+                "   SuspendedResourcesHolder suspendedResources = suspend(null);" +
+                "   if (debugEnabled) {" +
+                "    logger.debug(\"Creating new transaction with name [\" + definition.getName() + \"]: \" + definition);" +
+                "   }" +
+                "   try {" +
+                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);" +
+                "    DefaultTransactionStatus status = newTransactionStatus(" +
+                "      definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);" +
+                "    doBegin(transaction, definition);" +
+                "    prepareSynchronization(status, definition);" +
+                "    return status;" +
+                "   }" +
+                "   catch (RuntimeException | Error ex) {" +
+                "    resume(null, suspendedResources);" +
+                "    throw ex;" +
+                "   }" +
                 "  }").interpretation("处理第一次碰到这三种传播类型的事务")
                 .interpretation("1:第一次执行，不会执行任何的挂起操作")
                 .interpretation("2:新建DefaultTransactionStatus 执有所有 AbstractPlatformTransactionManager 所需要的内容，它用来表示一个当前的 事务对象")
@@ -174,78 +174,78 @@ public class TransactionHandleInSpring {
                     "PROPAGATION_REQUIRED/PROPAGATION_SUPPORTS/PROPAGATION_MANDATORY 则是在当前事务中继续执行"
     )
     public void handleExistingTransaction(){
-        Code.SLICE.source(" if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NEVER) {\n" +
-                "   throw new IllegalTransactionStateException(\n" +
-                "     \"Existing transaction found for transaction marked with propagation 'never'\");\n" +
+        Code.SLICE.source(" if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NEVER) {" +
+                "   throw new IllegalTransactionStateException(" +
+                "     \"Existing transaction found for transaction marked with propagation 'never'\");" +
                 "  }").source("看spring的自定义传播类型，如果方法标注的是不能有事务，那么扔出异常");
 
-        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED) {\n" +
-                "   if (debugEnabled) {\n" +
-                "    logger.debug(\"Suspending current transaction\");\n" +
-                "   }\n" +
-                "   Object suspendedResources = suspend(transaction);\n" +
-                "   boolean newSynchronization = (getTransactionSynchronization() == SYNCHRONIZATION_ALWAYS);\n" +
-                "   return prepareTransactionStatus(\n" +
-                "     definition, null, false, newSynchronization, debugEnabled, suspendedResources);\n" +
+        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED) {" +
+                "   if (debugEnabled) {" +
+                "    logger.debug(\"Suspending current transaction\");" +
+                "   }" +
+                "   Object suspendedResources = suspend(transaction);" +
+                "   boolean newSynchronization = (getTransactionSynchronization() == SYNCHRONIZATION_ALWAYS);" +
+                "   return prepareTransactionStatus(" +
+                "     definition, null, false, newSynchronization, debugEnabled, suspendedResources);" +
                 "  }")
                 .interpretation("当前方法包含的传播类型为不支持的事务。")
                 .interpretation("1:当前线程关联的事务统统与线程解除联系，放在返回的 suspendedResources 中 ")
                 .interpretation("2:仍然建立一个事务对象返回，用来保存刚和线程解除联系的对象，当前线程此时会被标记成没有事务");
 
-        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {\n" +
-                "   if (debugEnabled) {\n" +
-                "    logger.debug(\"Suspending current transaction, creating new transaction with name [\" +\n" +
-                "      definition.getName() + \"]\");\n" +
-                "   }\n" +
-                "   SuspendedResourcesHolder suspendedResources = suspend(transaction);\n" +
-                "   try {\n" +
-                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);\n" +
-                "    DefaultTransactionStatus status = newTransactionStatus(\n" +
-                "      definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);\n" +
-                "    doBegin(transaction, definition);\n" +
-                "    prepareSynchronization(status, definition);\n" +
-                "    return status;\n" +
-                "   }\n" +
-                "   catch (RuntimeException | Error beginEx) {\n" +
-                "    resumeAfterBeginException(transaction, suspendedResources, beginEx);\n" +
-                "    throw beginEx;\n" +
-                "   }\n" +
-                "  }\n")
+        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {" +
+                "   if (debugEnabled) {" +
+                "    logger.debug(\"Suspending current transaction, creating new transaction with name [\" +" +
+                "      definition.getName() + \"]\");" +
+                "   }" +
+                "   SuspendedResourcesHolder suspendedResources = suspend(transaction);" +
+                "   try {" +
+                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);" +
+                "    DefaultTransactionStatus status = newTransactionStatus(" +
+                "      definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);" +
+                "    doBegin(transaction, definition);" +
+                "    prepareSynchronization(status, definition);" +
+                "    return status;" +
+                "   }" +
+                "   catch (RuntimeException | Error beginEx) {" +
+                "    resumeAfterBeginException(transaction, suspendedResources, beginEx);" +
+                "    throw beginEx;" +
+                "   }" +
+                "  }")
                 .interpretation("每次新建一个事务对象，提现每次新建的语义")
                 .interpretation("1:解除前面与线程建立连接的事务")
                 .interpretation("2:建立新的事务，存储之前解除的事务")
                 .interpretation("3:将新建的事务与当前线程建立联系")
                 .interpretation("4:如果在这个新建过程中出现异常，则是将刚解除联系的对象再次绑定到当前线程上去，也就是执行解除关系的逆过程");
 
-        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NESTED) {\n" +
-                "   if (!isNestedTransactionAllowed()) {\n" +
-                "    throw new NestedTransactionNotSupportedException(\n" +
-                "      \"Transaction manager does not allow nested transactions by default - \" +\n" +
-                "      \"specify 'nestedTransactionAllowed' property with value 'true'\");\n" +
-                "   }\n" +
-                "   if (debugEnabled) {\n" +
-                "    logger.debug(\"Creating nested transaction with name [\" + definition.getName() + \"]\");\n" +
-                "   }\n" +
-                "   if (useSavepointForNestedTransaction()) {\n" +
-                "    // Create savepoint within existing Spring-managed transaction,\n" +
-                "    // through the SavepointManager API implemented by TransactionStatus.\n" +
-                "    // Usually uses JDBC 3.0 savepoints. Never activates Spring synchronization.\n" +
-                "    DefaultTransactionStatus status =\n" +
-                "      prepareTransactionStatus(definition, transaction, false, false, debugEnabled, null);\n" +
-                "    status.createAndHoldSavepoint();\n" +
-                "    return status;\n" +
-                "   }\n" +
-                "   else {\n" +
-                "    // Nested transaction through nested begin and commit/rollback calls.\n" +
-                "    // Usually only for JTA: Spring synchronization might get activated here\n" +
-                "    // in case of a pre-existing JTA transaction.\n" +
-                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);\n" +
-                "    DefaultTransactionStatus status = newTransactionStatus(\n" +
-                "      definition, transaction, true, newSynchronization, debugEnabled, null);\n" +
-                "    doBegin(transaction, definition);\n" +
-                "    prepareSynchronization(status, definition);\n" +
-                "    return status;\n" +
-                "   }\n" +
+        Code.SLICE.source("if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NESTED) {" +
+                "   if (!isNestedTransactionAllowed()) {" +
+                "    throw new NestedTransactionNotSupportedException(" +
+                "      \"Transaction manager does not allow nested transactions by default - \" +" +
+                "      \"specify 'nestedTransactionAllowed' property with value 'true'\");" +
+                "   }" +
+                "   if (debugEnabled) {" +
+                "    logger.debug(\"Creating nested transaction with name [\" + definition.getName() + \"]\");" +
+                "   }" +
+                "   if (useSavepointForNestedTransaction()) {" +
+                "    // Create savepoint within existing Spring-managed transaction," +
+                "    // through the SavepointManager API implemented by TransactionStatus." +
+                "    // Usually uses JDBC 3.0 savepoints. Never activates Spring synchronization." +
+                "    DefaultTransactionStatus status =" +
+                "      prepareTransactionStatus(definition, transaction, false, false, debugEnabled, null);" +
+                "    status.createAndHoldSavepoint();" +
+                "    return status;" +
+                "   }" +
+                "   else {" +
+                "    // Nested transaction through nested begin and commit/rollback calls." +
+                "    // Usually only for JTA: Spring synchronization might get activated here" +
+                "    // in case of a pre-existing JTA transaction." +
+                "    boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);" +
+                "    DefaultTransactionStatus status = newTransactionStatus(" +
+                "      definition, transaction, true, newSynchronization, debugEnabled, null);" +
+                "    doBegin(transaction, definition);" +
+                "    prepareSynchronization(status, definition);" +
+                "    return status;" +
+                "   }" +
                 "  }")
                 .interpretation("执行嵌套语义,默认创建安全点")
                 .interpretation("1:首先要执行嵌套语义，程序必须显示支持的")
@@ -253,7 +253,7 @@ public class TransactionHandleInSpring {
                 .interpretation("3:不需要创建安全点则只需要按照正常的步骤关联对象到当前线程即可");
         //...
 
-        Code.SLICE.source(" boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);\n" +
+        Code.SLICE.source(" boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);" +
                 "  return prepareTransactionStatus(definition, transaction, false, newSynchronization, debugEnabled, null);")
                 .interpretation(" 这里是仅创建一个新的事务对象,能到达这里的事务类型包括,PROPAGATION_REQUIRED/PROPAGATION_SUPPORTS/PROPAGATION_MANDATORY，意味着直接在当前线程事务里面执行");
     }
@@ -277,7 +277,7 @@ public class TransactionHandleInSpring {
         Code.SLICE.source("suspendedResources = doSuspend(transaction);")
                 .interpretation("清空当前线程的连接,并解除其与当前线程的关系，并进一步的清除 TransactionSynchronizationManager 中设定的所有之前设定的连接相关的值");
         //...
-        Code.SLICE.source("return new SuspendedResourcesHolder(\n" +
+        Code.SLICE.source("return new SuspendedResourcesHolder(" +
                 "      suspendedResources, suspendedSynchronizations, name, readOnly, isolationLevel, wasActive)")
                 .interpretation("清除的信息全部保存到 SuspendedResourcesHolder 已被后续唤醒的时候用");
         //...
@@ -308,20 +308,20 @@ public class TransactionHandleInSpring {
       //...
         Code.SLICE.source("triggerBeforeCompletion(status);")
                 .interpretation("如果当前事务是为他新建的一个连接，如果发现这个连接已经没有引用了，那么直接关掉连接，并解除与当前线程的关系");
-       Code.SLICE.source("\n" +
-               "    if (status.hasSavepoint()) {\n" +
-               "     if (status.isDebug()) {\n" +
-               "      logger.debug(\"Rolling back transaction to savepoint\");\n" +
-               "     }\n" +
-               "     status.rollbackToHeldSavepoint();\n" +
+       Code.SLICE.source("" +
+               "    if (status.hasSavepoint()) {" +
+               "     if (status.isDebug()) {" +
+               "      logger.debug(\"Rolling back transaction to savepoint\");" +
+               "     }" +
+               "     status.rollbackToHeldSavepoint();" +
                "    }")
                .interpretation("如果当前事务创建过安全点,则回滚到对应的安全点，具体执行实际也是通过 Connection来执行 conHolder.getConnection().rollback((Savepoint) savepoint);");
 
-        Code.SLICE.source("else if (status.isNewTransaction()) {\n" +
-                "     if (status.isDebug()) {\n" +
-                "      logger.debug(\"Initiating transaction rollback\");\n" +
-                "     }\n" +
-                "     doRollback(status);\n" +
+        Code.SLICE.source("else if (status.isNewTransaction()) {" +
+                "     if (status.isDebug()) {" +
+                "      logger.debug(\"Initiating transaction rollback\");" +
+                "     }" +
+                "     doRollback(status);" +
                 "    }")
                 .interpretation("如果它是第一层的事务，直接执行回滚,实质上也是执行 con.rollback(); 如果有参与了其它的事务，则有可能是让原有的事务来决定是否执行回滚");
         //...
@@ -348,12 +348,12 @@ public class TransactionHandleInSpring {
     )
     public void processCommit(){
          //...
-        Code.SLICE.source("else if (status.isNewTransaction()) {\n" +
-                "     if (status.isDebug()) {\n" +
-                "      logger.debug(\"Initiating transaction commit\");\n" +
-                "     }\n" +
-                "     unexpectedRollback = status.isGlobalRollbackOnly();\n" +
-                "     doCommit(status);\n" +
+        Code.SLICE.source("else if (status.isNewTransaction()) {" +
+                "     if (status.isDebug()) {" +
+                "      logger.debug(\"Initiating transaction commit\");" +
+                "     }" +
+                "     unexpectedRollback = status.isGlobalRollbackOnly();" +
+                "     doCommit(status);" +
                 "    }")
             .interpretation("事务最终执行提交，实际也是获取连接来提交 con.commit();");
          //...

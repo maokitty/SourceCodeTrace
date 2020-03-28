@@ -41,11 +41,11 @@ public class TransactionAnnotationUseInSpring {
         Code.SLICE.source("registerTransactionalEventListenerFactory(parserContext);")
                 .interpretation("首先干的一件事情就是注册事务的监听器工厂，TransactionalEventListenerFactory，创建");
         //...
-        Code.SLICE.source("if (\"aspectj\".equals(mode)) {\n" +
+        Code.SLICE.source("if (\"aspectj\".equals(mode)) {" +
                 "   //aspectj处理" +
-                "  }\n" +
-                "  else {\n" +
-                "   AopAutoProxyConfigurer.configureAutoProxyCreator(element, parserContext);\n" +
+                "  }" +
+                "  else {" +
+                "   AopAutoProxyConfigurer.configureAutoProxyCreator(element, parserContext);" +
                 "  }")
                 .interpretation("获取xml的mode属性，可以看到对 aspectj 的支持，如果没有则默认使用 proxy 的模式");
     }
@@ -82,18 +82,18 @@ public class TransactionAnnotationUseInSpring {
     )
     public void  AnnotationTransactionAttributeSource(){
         // ...
-        Code.SLICE.source("if (jta12Present || ejb3Present) {\n" +
-                "   this.annotationParsers = new LinkedHashSet<>(4);\n" +
-                "   this.annotationParsers.add(new SpringTransactionAnnotationParser());\n" +
-                "   if (jta12Present) {\n" +
-                "    this.annotationParsers.add(new JtaTransactionAnnotationParser());\n" +
-                "   }\n" +
-                "   if (ejb3Present) {\n" +
-                "    this.annotationParsers.add(new Ejb3TransactionAnnotationParser());\n" +
-                "   }\n" +
-                "  }\n" +
-                "  else {\n" +
-                "   this.annotationParsers = Collections.singleton(new SpringTransactionAnnotationParser());\n" +
+        Code.SLICE.source("if (jta12Present || ejb3Present) {" +
+                "   this.annotationParsers = new LinkedHashSet<>(4);" +
+                "   this.annotationParsers.add(new SpringTransactionAnnotationParser());" +
+                "   if (jta12Present) {" +
+                "    this.annotationParsers.add(new JtaTransactionAnnotationParser());" +
+                "   }" +
+                "   if (ejb3Present) {" +
+                "    this.annotationParsers.add(new Ejb3TransactionAnnotationParser());" +
+                "   }" +
+                "  }" +
+                "  else {" +
+                "   this.annotationParsers = Collections.singleton(new SpringTransactionAnnotationParser());" +
                 "  } ")
                 .interpretation("看看是否存在 javax.transaction.Transactional 和 javax.ejb.TransactionAttribute 这两个标签，如果有的话就添加对用的 注解解析器，另外不管怎样都会添加spring自己的注解解析器 ");
     }
@@ -135,7 +135,7 @@ public class TransactionAnnotationUseInSpring {
     @Recall(traceIndex = 2,tip = "读到 tx 注解的时候，就插入了对 AOP 的后置处理")
     public void applyBeanPostProcessorsAfterInitialization(){
         //...
-        Code.SLICE.source("for (BeanPostProcessor beanProcessor : getBeanPostProcessors()) {\n" +
+        Code.SLICE.source("for (BeanPostProcessor beanProcessor : getBeanPostProcessors()) {" +
                                     "result = beanProcessor.postProcessAfterInitialization(result, beanName);")
                 .interpretation("就是获取所有的后置处理器，每一个遍历执行。注意到之前AOP添加的InfrastructureAdvisorAutoProxyCreator，它的父类 AbstractAdvisorAutoProxyCreator 的父类 AbstractAutoProxyCreator 就有对AOP的后置处理");
         //...
@@ -164,9 +164,9 @@ public class TransactionAnnotationUseInSpring {
         Code.SLICE.source("Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);")
                 .interpretation("获取目标类的 advisor");
         //...
-        Code.SLICE.source("this.advisedBeans.put(cacheKey, Boolean.TRUE);\n" +
-                "   Object proxy = createProxy(\n" +
-                "     bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));\n" +
+        Code.SLICE.source("this.advisedBeans.put(cacheKey, Boolean.TRUE);" +
+                "   Object proxy = createProxy(" +
+                "     bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));" +
                 "   this.proxyTypes.put(cacheKey, proxy.getClass());")
                 .interpretation("如果目标类存在 advidor,首先做个标记，同时创建这个advisor的代理工厂:ProxyFactory，再通过它来获取目标类的代理，spring的AOP如果是类的实现，返回的则是使用 CglibAopProxy创建的代理" +
                         ",另外，对aop,则是使用DynamicAdvisedInterceptor拦截器来处理对应的AOP逻辑,它自身也会保存这个 ProxyFactory 到字段 advised");
@@ -225,11 +225,11 @@ public class TransactionAnnotationUseInSpring {
 
     public void txInvoke(){
             //...
-        Code.SLICE.source("return invokeWithinTransaction(invocation.getMethod(), targetClass, new InvocationCallback() {\n" +
-                "      @Override\n" +
-                "      public Object proceedWithInvocation() throws Throwable {\n" +
-                "        return invocation.proceed();\n" +
-                "      }\n" +
+        Code.SLICE.source("return invokeWithinTransaction(invocation.getMethod(), targetClass, new InvocationCallback() {" +
+                "      @Override" +
+                "      public Object proceedWithInvocation() throws Throwable {" +
+                "        return invocation.proceed();" +
+                "      }" +
                 "    });").interpretation("先执行事务的代理，然后执行被代理的方法，这里的invocation就是被代理的用户自己写的方法");
     }
 
@@ -247,20 +247,20 @@ public class TransactionAnnotationUseInSpring {
         Code.SLICE.source("final String joinpointIdentification = methodIdentification(method, targetClass);")
                 .interpretation("获取transaction标注的方法");
         //...
-        Code.SLICE.source("TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);\n" +
-                "   Object retVal = null;\n" +
-                "   try {\n" +
-                "    retVal = invocation.proceedWithInvocation();\n" +
-                "   }\n" +
-                "   catch (Throwable ex) {\n" +
-                "    // target invocation exception\n" +
-                "    completeTransactionAfterThrowing(txInfo, ex);\n" +
-                "    throw ex;\n" +
-                "   }\n" +
-                "   finally {\n" +
-                "    cleanupTransactionInfo(txInfo);\n" +
-                "   }\n" +
-                "   commitTransactionAfterReturning(txInfo);\n" +
+        Code.SLICE.source("TransactionInfo txInfo = createTransactionIfNecessary(tm, txAttr, joinpointIdentification);" +
+                "   Object retVal = null;" +
+                "   try {" +
+                "    retVal = invocation.proceedWithInvocation();" +
+                "   }" +
+                "   catch (Throwable ex) {" +
+                "    // target invocation exception" +
+                "    completeTransactionAfterThrowing(txInfo, ex);" +
+                "    throw ex;" +
+                "   }" +
+                "   finally {" +
+                "    cleanupTransactionInfo(txInfo);" +
+                "   }" +
+                "   commitTransactionAfterReturning(txInfo);" +
                 "   return retVal;")
                 .interpretation("这里就是标准的事务处理流程  1：获取事务；2：执行用户自己的方法；3：如果执行过程中抛出了异常执行异常抛出后的事务处理逻辑 4：清除事务信息 5：提交事务");
         //...

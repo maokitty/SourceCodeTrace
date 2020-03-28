@@ -153,10 +153,10 @@ public class SingletonOfSpringBean {
     )
     public void doGetBean(){
         //...
-        Code.SLICE.source("if (mbd.isSingleton()) {\n" +
-                        "   sharedInstance = getSingleton(beanName, () -> {\n" +
-                        "     return createBean(beanName, mbd, args);\n" +
-                        "   });\n" +
+        Code.SLICE.source("if (mbd.isSingleton()) {" +
+                        "   sharedInstance = getSingleton(beanName, () -> {" +
+                        "     return createBean(beanName, mbd, args);" +
+                        "   });" +
                         "}")
                 .interpretation("根据定义，如果他是singleton，就执行对应的逻辑");
         //...

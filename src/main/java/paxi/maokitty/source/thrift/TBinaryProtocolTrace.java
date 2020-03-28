@@ -23,15 +23,15 @@ public class TBinaryProtocolTrace {
     )
     public void main(){
         //...
-        Code.SLICE.source(" //1:网路请求相关设置\n" +
-                "            transport=new TSocket(\"127.0.0.1\",9000,1000);\n" +
-                "            //2:传输数据的编码方式\n" +
-                "            TProtocol protocol=new TBinaryProtocol(transport);\n" +
-                "            //3:建立连接\n" +
-                "            transport.open();\n" +
-                "            //4:创建客户端\n" +
-                "            DemoService.Client client=new DemoService.Client(protocol);\n" +
-                "            //5:发起请求\n" +
+        Code.SLICE.source(" //1:网路请求相关设置" +
+                "            transport=new TSocket(\"127.0.0.1\",9000,1000);" +
+                "            //2:传输数据的编码方式" +
+                "            TProtocol protocol=new TBinaryProtocol(transport);" +
+                "            //3:建立连接" +
+                "            transport.open();" +
+                "            //4:创建客户端" +
+                "            DemoService.Client client=new DemoService.Client(protocol);" +
+                "            //5:发起请求" +
                 "            String say = client.say(\"i am client\");")
                 .interpretation("client发起请求的方式，下面会从client.say为入口去看，client的实现来自 DemoService.Client");
         //...
@@ -43,7 +43,7 @@ public class TBinaryProtocolTrace {
             function = "public String say(String msg) throws paxi.maokitty.verify.exception.myException, org.apache.thrift.TException"
     )
     public void say(){
-        Code.SLICE.source(" send_say(msg);\n" +
+        Code.SLICE.source(" send_say(msg);" +
                     "       return recv_say();")
                 .interpretation("这段代码是经过编译自动形成的")
         .interpretation("send_say的核心是 sendBase,recv_say的核心则是receiveBase，receiveBase会根据返回的最终结果，决定是成功返回值还是抛出异常");
@@ -74,9 +74,9 @@ public class TBinaryProtocolTrace {
     )
     public void writeMessageBegin(){
         //..
-        Code.SLICE.source(" int version = VERSION_1 | message.type;\n" +
-                "      writeI32(version);\n" +
-                "      writeString(message.name);\n" +
+        Code.SLICE.source(" int version = VERSION_1 | message.type;" +
+                "      writeI32(version);" +
+                "      writeString(message.name);" +
                 "      writeI32(message.seqid);")
                 .interpretation("默认使用的是严格写的模式，thrift先写入版本信息，版本信息本身会蕴含方法的类型(如方法调用或者是返回)，然后写入方法的名字和序号");
     }
@@ -109,8 +109,8 @@ public class TBinaryProtocolTrace {
     )
     public void writeString(){
         //..
-        Code.SLICE.source("  byte[] dat = str.getBytes(\"UTF-8\");\n" +
-                "      writeI32(dat.length);\n" +
+        Code.SLICE.source("  byte[] dat = str.getBytes(\"UTF-8\");" +
+                "      writeI32(dat.length);" +
                 "      trans_.write(dat, 0, dat.length);")
                 .interpretation("先是写入了字符串的长度，然后再把整个字符串写入输出流");
     }
@@ -122,10 +122,10 @@ public class TBinaryProtocolTrace {
     )
     public void sayArgsWrite(){
         //...
-        Code.SLICE.source(" if (struct.msg != null) {\n" +
-                "          oprot.writeFieldBegin(MSG_FIELD_DESC);\n" +
-                "          oprot.writeString(struct.msg);\n" +
-                "          oprot.writeFieldEnd();\n" +
+        Code.SLICE.source(" if (struct.msg != null) {" +
+                "          oprot.writeFieldBegin(MSG_FIELD_DESC);" +
+                "          oprot.writeString(struct.msg);" +
+                "          oprot.writeFieldEnd();" +
                 "        }")
                 .interpretation("msg字段不为null开始写入")
                 .interpretation("1:依次写入msg字段的类型，和ID，对于msg字段来讲就是string,详细的类型可以看 类 TType")
@@ -143,16 +143,16 @@ public class TBinaryProtocolTrace {
             more = "thrift项目下的子module thriftServer的main函数"
     )
     public void serverMain(){
-        Code.SLICE.source(" //1:创建等待连接的serverSocket\n" +
-                "            TServerSocket serverSocket=new TServerSocket(9000);\n" +
-                "            //2:构建server所需要的参数\n" +
-                "            TServer.Args serverArgs=new TServer.Args(serverSocket);\n" +
-                "            //3:逻辑处理\n" +
-                "            TProcessor processor=new DemoService.Processor<DemoService.Iface>(new DemoServiceImpl());\n" +
-                "            //4:解析协议\n" +
-                "            serverArgs.protocolFactory(new TBinaryProtocol.Factory());\n" +
-                "            serverArgs.processor(processor);\n" +
-                "            //5:组织组件完成功能\n" +
+        Code.SLICE.source(" //1:创建等待连接的serverSocket" +
+                "            TServerSocket serverSocket=new TServerSocket(9000);" +
+                "            //2:构建server所需要的参数" +
+                "            TServer.Args serverArgs=new TServer.Args(serverSocket);" +
+                "            //3:逻辑处理" +
+                "            TProcessor processor=new DemoService.Processor<DemoService.Iface>(new DemoServiceImpl());" +
+                "            //4:解析协议" +
+                "            serverArgs.protocolFactory(new TBinaryProtocol.Factory());" +
+                "            serverArgs.processor(processor);" +
+                "            //5:组织组件完成功能" +
                 "            TServer server=new TSimpleServer(serverArgs);" +
                 "            server.serve();")
                 .interpretation("server表明接收连接的接口，表明处理数据的protocol以及收到连接后的处理器，然后启动Server等待连接的到来");
@@ -168,11 +168,11 @@ public class TBinaryProtocolTrace {
         Code.SLICE.source("client = serverTransport_.accept();")
                 .interpretation("底层就是ServerSocket的accept函数，它将返回的结果封装成TSocket返回");
         //..
-        Code.SLICE.source(" processor = processorFactory_.getProcessor(client);\n" +
-                "          inputTransport = inputTransportFactory_.getTransport(client);\n" +
-                "          outputTransport = outputTransportFactory_.getTransport(client);\n" +
-                "          inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);\n" +
-                "          outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);\n" +
+        Code.SLICE.source(" processor = processorFactory_.getProcessor(client);" +
+                "          inputTransport = inputTransportFactory_.getTransport(client);" +
+                "          outputTransport = outputTransportFactory_.getTransport(client);" +
+                "          inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);" +
+                "          outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);" +
                 "          while (processor.process(inputProtocol, outputProtocol)) {}")
                 .interpretation("processor即thrift根据用户写的代码实现类的processor,其余四个参数则是得到的请求中获取的协议处理器，用来读取数据和返回数据,拿到后交由处理器处理");
     }
@@ -187,15 +187,15 @@ public class TBinaryProtocolTrace {
                 .interpretation("获取方法名相关信息");
         Code.SLICE.source("ProcessFunction fn = processMap.get(msg.name);")
                 .interpretation("在服务端的Processor初始化的时候，就会把所有的函数名都放在内存里面，然后读取,这里就是查找函数名");
-        Code.SLICE.source("if (fn == null) {\n" +
-                "      TProtocolUtil.skip(in, TType.STRUCT);\n" +
-                "      in.readMessageEnd();\n" +
-                "      TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, \"Invalid method name: '\"+msg.name+\"'\");\n" +
-                "      out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));\n" +
-                "      x.write(out);\n" +
-                "      out.writeMessageEnd();\n" +
-                "      out.getTransport().flush();\n" +
-                "      return true;\n" +
+        Code.SLICE.source("if (fn == null) {" +
+                "      TProtocolUtil.skip(in, TType.STRUCT);" +
+                "      in.readMessageEnd();" +
+                "      TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, \"Invalid method name: '\"+msg.name+\"'\");" +
+                "      out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" +
+                "      x.write(out);" +
+                "      out.writeMessageEnd();" +
+                "      out.getTransport().flush();" +
+                "      return true;" +
                 "    }")
                 .interpretation("如果没有这个函数，也就是说客户端是有这个方法的，但是服务端没有，这个时候，就返回异常");
         Code.SLICE.source("fn.process(msg.seqid, in, out, iface);")
@@ -230,8 +230,8 @@ public class TBinaryProtocolTrace {
                 .interpretation("调用实现类，去执行用户自己写的逻辑，并得到对应的结果");
         //...
         Code.SLICE.source("oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.REPLY, seqid));" +
-                " result.write(oprot);\n" +
-                "    oprot.writeMessageEnd();\n" +
+                " result.write(oprot);" +
+                "    oprot.writeMessageEnd();" +
                 "    oprot.getTransport().flush();")
                 .interpretation("开始往返回Stream中写入数据，表明这是对那个方法的返回值，然后写入返回的结果，最后输入socket");
     }
@@ -244,21 +244,21 @@ public class TBinaryProtocolTrace {
       //...
         Code.SLICE.source("schemeField = iprot.readFieldBegin();")
                 .interpretation("读取字段，和写入顺序意义对应，也是先读到类型，然后是序号，当然这里也有可能读到结束符");
-        Code.SLICE.source("if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { \n" +
-                "            break;\n" +
+        Code.SLICE.source("if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { " +
+                "            break;" +
                 "          }")
                 .interpretation("如果读到的是结束符，说明读取参数字段结束");
-        Code.SLICE.source("switch (schemeField.id) {\n" +
-                "            case 1: // MSG\n" +
-                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {\n" +
-                "                struct.msg = iprot.readString();\n" +
-                "                struct.setMsgIsSet(true);\n" +
-                "              } else { \n" +
-                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);\n" +
-                "              }\n" +
-                "              break;\n" +
-                "            default:\n" +
-                "              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);\n" +
+        Code.SLICE.source("switch (schemeField.id) {" +
+                "            case 1: // MSG" +
+                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {" +
+                "                struct.msg = iprot.readString();" +
+                "                struct.setMsgIsSet(true);" +
+                "              } else { " +
+                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" +
+                "              }" +
+                "              break;" +
+                "            default:" +
+                "              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" +
                 "          }")
                 .interpretation("根据读取到的序号，来按照序号处理字段，直到读取所有字段结束。这里可以看到两点")
                 .interpretation("1:参数的序号对于thrift来说特别重要")
@@ -276,10 +276,10 @@ public class TBinaryProtocolTrace {
     public void receiveBase(){
         Code.SLICE.source("TMessage msg = iprot_.readMessageBegin();")
                 .interpretation("从SocketInputStream中读取内容，读的方法和服务端读取方法一模一样");
-        Code.SLICE.source("if (msg.type == TMessageType.EXCEPTION) {\n" +
-                "      TApplicationException x = TApplicationException.read(iprot_);\n" +
-                "      iprot_.readMessageEnd();\n" +
-                "      throw x;\n" +
+        Code.SLICE.source("if (msg.type == TMessageType.EXCEPTION) {" +
+                "      TApplicationException x = TApplicationException.read(iprot_);" +
+                "      iprot_.readMessageEnd();" +
+                "      throw x;" +
                 "    }")
                 .interpretation("如果返回结果的类型是异常，则按照异常来处理，并抛出它");
         //..
@@ -293,30 +293,30 @@ public class TBinaryProtocolTrace {
             function = "public void read(org.apache.thrift.protocol.TProtocol iprot, say_result struct) throws org.apache.thrift.TException "
     )
     public void readResult(){
-        Code.SLICE.source(" schemeField = iprot.readFieldBegin();\n" +
-                "          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { \n" +
-                "            break;\n" +
-                "          }\n" +
-                "          switch (schemeField.id) {\n" +
-                "            case 0: // SUCCESS\n" +
-                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {\n" +
-                "                struct.success = iprot.readString();\n" +
-                "                struct.setSuccessIsSet(true);\n" +
-                "              } else { \n" +
-                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);\n" +
-                "              }\n" +
-                "              break;\n" +
-                "            case 1: // E\n" +
-                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {\n" +
-                "                struct.e = new paxi.maokitty.verify.exception.myException();\n" +
-                "                struct.e.read(iprot);\n" +
-                "                struct.setEIsSet(true);\n" +
-                "              } else { \n" +
-                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);\n" +
-                "              }\n" +
-                "              break;\n" +
-                "            default:\n" +
-                "              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);\n" +
+        Code.SLICE.source(" schemeField = iprot.readFieldBegin();" +
+                "          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { " +
+                "            break;" +
+                "          }" +
+                "          switch (schemeField.id) {" +
+                "            case 0: // SUCCESS" +
+                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {" +
+                "                struct.success = iprot.readString();" +
+                "                struct.setSuccessIsSet(true);" +
+                "              } else { " +
+                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" +
+                "              }" +
+                "              break;" +
+                "            case 1: // E" +
+                "              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {" +
+                "                struct.e = new paxi.maokitty.verify.exception.myException();" +
+                "                struct.e.read(iprot);" +
+                "                struct.setEIsSet(true);" +
+                "              } else { " +
+                "                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" +
+                "              }" +
+                "              break;" +
+                "            default:" +
+                "              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" +
                 "          }")
                 .interpretation("读取的过程类似参数读取，只不过这里的读取方式是换成了结果的字段，同时对于无法识别的类型也会直接跳过");
     }
