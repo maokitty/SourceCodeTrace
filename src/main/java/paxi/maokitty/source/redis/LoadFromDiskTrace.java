@@ -11,13 +11,13 @@ import paxi.maokitty.source.util.Code;
  */
 @Background(
         target = "了解启动redis后是如何加载数据的",
-        conclusion = "1:启动的时候就会执行加载AOF或者RDB；2：加载RDB的文件解析其实就是按照既定的规则执行反序列化",
+        conclusion = "1:启动的时候就会执行加载AOF或者RDB；2：加载RDB的文件解析其实就是按照既定的规则执行反序列化;3:加载AOF也就是一条条的执行所有命令",
         sourceCodeProjectName = "redis",
         sourceCodeAddress = "https://github.com/antirez/redis",
         projectVersion = "5.0.0"
 
 )
-public class RdbLoadTrace {
+public class LoadFromDiskTrace {
 
     @Main
     @Trace(
@@ -194,6 +194,48 @@ public class RdbLoadTrace {
                 "    }")
                 .interpretation("以hashtable为例，读取到对应的数据长度，创建对象，根据对象的编码方式，分别解析成ziplist或者是hashtable来存储");
         //...
+    }
+
+    @Trace(
+            index = 6,
+            originClassName = "aof.c",
+            function = "int loadAppendOnlyFile(char *filename) "
+    )
+    public void  loadAppendOnlyFile(){
+        //..
+        Code.SLICE.source("FILE *fp = fopen(filename,\"r\");")
+                .interpretation("打开AOF文件");
+        //..
+        Code.SLICE.source("while(1) ")
+                .interpretation("读取AOF文件的内容，按照 REPL 的格式 ，1条条命令处理");
+        //..
+        Code.SLICE.source("if (fgets(buf,sizeof(buf),fp) == NULL)")
+                .interpretation("从文件中读取一定字节到buf中");
+        //..
+        Code.SLICE.source("argc = atoi(buf+1);")
+                .interpretation("拿到命令的长度");
+        //..
+        Code.SLICE.source("for (j = 0; j < argc; j++) ")
+                .interpretation("一个个的解析这条命令的所有数据,中间会对写入的数据做校验");
+        //..
+        Code.SLICE.source("argv[j] = createObject(OBJ_STRING,argsds);")
+                .interpretation("将数据存储到argv数组");
+        //..
+        Code.SLICE.source("cmd = lookupCommand(argv[0]->ptr);")
+                .interpretation("确保要执行的命令是合法的redis命令");
+        //..
+        Code.SLICE.source("cmd->proc(fakeClient);")
+                .interpretation("模拟执行");
+        //..
+        Code.SLICE.source("fclose(fp);" +
+                "    freeFakeClient(fakeClient);" +
+                "    server.aof_state = old_aof_state;" +
+                "    stopLoading(1);" +
+                "    aofUpdateCurrentSize();" +
+                "    server.aof_rewrite_base_size = server.aof_current_size;" +
+                "    server.aof_fsync_offset = server.aof_current_size;" +
+                "    return C_OK;")
+                .interpretation("加载完成");
     }
 
 
